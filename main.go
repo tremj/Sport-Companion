@@ -24,15 +24,17 @@ func main() {
 		log.Fatal("Failed to migrate database", err)
 	}
 
-	users := [2]database.Users{{Username: "Bobby", Password: "Bob"}, {Username: "Mike", Password: "ILovePizza"}}
-
-	db.Create(&users)
-
 	router := mux.NewRouter()
 
 	router.HandleFunc("/users", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetUsers(writer, request, db)
 	}).Methods("GET")
+	router.HandleFunc("/users/{id}", func(writer http.ResponseWriter, request *http.Request) {
+		api.GetUserByID(writer, request, db)
+	}).Methods("GET")
+	router.HandleFunc("/users/create", func(writer http.ResponseWriter, request *http.Request) {
+		api.CreateUser(writer, request, db)
+	}).Methods("POST")
 
 	port := ":8080"
 	fmt.Printf("Listening on port %s...\n", port)

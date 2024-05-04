@@ -1,0 +1,3 @@
+GET: /users -> curl http://localhost:8080/users
+GET: /users/{id} -> curl http://localhost:8080/users/{...}
+POST: /users/create -> curl -X POST -H 'Content-Type: application/json' -d '{"username": "KTon", "password": "kekw2024"}' http://localhost:8080/users/create
