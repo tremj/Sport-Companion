@@ -4,5 +4,7 @@ GET: /users/{id} ->
     curl http://localhost:8080/users/{...}
 POST: /users/create ->
     curl -X POST -H 'Content-Type: application/json' -d '{"username": "kushkiller420", "password": "dabomb123"}' http://localhost:8080/users/create
-PUT: /users/update?{username} ->
+PUT: /users/update ->
     curl -X PUT -H 'Content-Type: application/json' -d '{"username": "...", "password": "..."}' http://localhost:8080/users/update
+DELETE: /users/delete/{username}
+    curl -X DELETE http://localhost:8080/users/delete/{username}

@@ -62,7 +62,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	var userData, checkData struct {
+	var userData struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
@@ -73,11 +73,10 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
-	fmt.Println(userData.Username + " " + userData.Password)
 	db.Exec(`UPDATE users SET password = $1 WHERE username = $2`, userData.Password, userData.Username)
-	db.Raw(`SELECT * FROM users WHERE username = $1`, userData.Username).Scan(&checkData)
-	fmt.Println(checkData.Username + " " + checkData.Password)
-	if checkData.Username == "" {
-		http.Error(w, "User not found", http.StatusNotFound)
-	}
+}
+
+func DeleteUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	userObj := mux.Vars(r)["username"]
+	db.Exec(`DELETE FROM users WHERE username = $1`, userObj)
 }
