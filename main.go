@@ -40,7 +40,7 @@ func main() {
 	}).Methods("PUT")
 	router.HandleFunc("/users/delete/{username}", func(writer http.ResponseWriter, request *http.Request) {
 		api.DeleteUser(writer, request, db)
-	})
+	}).Methods("DELETE")
 
 	port := ":8080"
 	fmt.Printf("Listening on port %s...\n", port)
