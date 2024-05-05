@@ -74,7 +74,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		return
 	}
 	fmt.Println(userData.Username + " " + userData.Password)
-	db.Exec(`UPDATE users SET password = $2 WHERE username = $1`, userData.Username, userData.Password)
+	db.Exec(`UPDATE users SET password = $1 WHERE username = $2`, userData.Password, userData.Username)
 	db.Raw(`SELECT * FROM users WHERE username = $1`, userData.Username).Scan(&checkData)
 	fmt.Println(checkData.Username + " " + checkData.Password)
 	if checkData.Username == "" {
