@@ -26,6 +26,7 @@ func main() {
 
 	router := mux.NewRouter()
 
+	// user endpoints
 	router.HandleFunc("/users", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetUsers(writer, request, db)
 	}).Methods("GET")
@@ -40,6 +41,23 @@ func main() {
 	}).Methods("PUT")
 	router.HandleFunc("/users/delete/{username}", func(writer http.ResponseWriter, request *http.Request) {
 		api.DeleteUser(writer, request, db)
+	}).Methods("DELETE")
+
+	// sport team endpoints
+	router.HandleFunc("/teams", func(writer http.ResponseWriter, request *http.Request) {
+		api.GetTeams(writer, request, db)
+	}).Methods("GET")
+	router.HandleFunc("/teams/{id}", func(writer http.ResponseWriter, request *http.Request) {
+		api.GetTeamByID(writer, request, db)
+	}).Methods("GET")
+	router.HandleFunc("/teams/create", func(writer http.ResponseWriter, request *http.Request) {
+		api.CreateTeam(writer, request, db)
+	}).Methods("POST")
+	router.HandleFunc("/teams/update", func(writer http.ResponseWriter, request *http.Request) {
+		api.UpdateTeam(writer, request, db)
+	}).Methods("PUT")
+	router.HandleFunc("/teams/delete", func(writer http.ResponseWriter, request *http.Request) {
+		api.DeleteTeam(writer, request, db)
 	}).Methods("DELETE")
 
 	port := ":8080"

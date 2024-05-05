@@ -9,7 +9,6 @@ type Users struct {
 type SportTeam struct {
 	ID       uint `gorm:"primary_key;auto_increment" json:"id"`
 	Name     string
-	LogoPath string
 	Hometown string
 }
 

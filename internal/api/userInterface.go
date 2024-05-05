@@ -61,6 +61,9 @@ func CreateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	}
 }
 
+/*
+UpdateUser is an API endpoint to update the password of an existing User
+*/
 func UpdateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	var userData struct {
 		Username string `json:"username"`
@@ -76,7 +79,10 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	db.Exec(`UPDATE users SET password = $1 WHERE username = $2`, userData.Password, userData.Username)
 }
 
+/*
+DeleteUser is an API endpoint that deletes the identified users in the endpoint URL
+*/
 func DeleteUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	userObj := mux.Vars(r)["username"]
-	db.Exec(`DELETE FROM users WHERE username = $1`, userObj)
+	username := mux.Vars(r)["username"]
+	db.Exec(`DELETE FROM users WHERE username = $1`, username)
 }
