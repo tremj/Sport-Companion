@@ -60,6 +60,23 @@ func main() {
 		api.DeleteTeam(writer, request, db)
 	}).Methods("DELETE")
 
+	// league endpoints
+	router.HandleFunc("/leagues", func(writer http.ResponseWriter, request *http.Request) {
+		api.GetLeagues(writer, request, db)
+	}).Methods("GET")
+	router.HandleFunc("/leagues/{id}", func(writer http.ResponseWriter, request *http.Request) {
+		api.GetLeagueByID(writer, request, db)
+	}).Methods("GET")
+	router.HandleFunc("/leagues/create", func(writer http.ResponseWriter, request *http.Request) {
+		api.CreateLeague(writer, request, db)
+	}).Methods("POST")
+	router.HandleFunc("/leagues/update", func(writer http.ResponseWriter, request *http.Request) {
+		api.UpdateLeague(writer, request, db)
+	}).Methods("PUT")
+	router.HandleFunc("/leagues/delete", func(writer http.ResponseWriter, request *http.Request) {
+		api.DeleteLeague(writer, request, db)
+	}).Methods("DELETE")
+	
 	port := ":8080"
 	fmt.Printf("Listening on port %s...\n", port)
 	log.Fatal(http.ListenAndServe(port, router))

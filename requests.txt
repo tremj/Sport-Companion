@@ -13,11 +13,23 @@
 /teams endpoints
     GET: /teams ->
         curl -X GET http://localhost:8080/teams
-    GET: /teams/{id}
+    GET: /teams/{id} ->
         curl -X GET http://localhost:8080/teams/{...}
     POST: /teams/create ->
         curl -X POST -H 'Content-Type: application/json' -d '{"name": "...", "hometown": "..."}' http://localhost:8080/teams/create
     PUT: /teams/update ->
-        curl -X PUT -H 'Content-Type: application/json' -d '{"name": "...", "hometown": "..."}' http://localhost:8080/teams/create
-    DELETE: /teams/delete/{name}
+        curl -X PUT -H 'Content-Type: application/json' -d '{"name": "...", "hometown": "..."}' http://localhost:8080/teams/update
+    DELETE: /teams/delete ->
         curl -X DELETE -H 'Content-Type: application/json' -d '{"name": "..."}' http://localhost:8080/teams/delete
+
+/leagues endpoints
+    GET: /leagues ->
+        curl -X GET http://localhost:8080/leagues
+    GET: /leagues/{id} ->
+        curl -X GET http://localhost:8080/leagues/{...}
+    POST: /leagues/create ->
+        curl -X POST -H 'Content-Type: application/json' -d '{"name": "...", "sport": "..."}' http://localhost:8080/leagues/create
+    PUT: /leagues/update ->
+        curl -X PUT -H 'Content-Type: application/json' -d '{"new_name": "...", "old_name": "..."}' http://localhost:8080/leagues/update
+    DELETE: /leagues/delete ->
+        curl -X DELETE -H 'Content-Type: application/json' -d '{"name": "..."}' http://localhost:8080/leagues/delete

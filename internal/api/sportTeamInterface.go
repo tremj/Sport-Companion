@@ -24,7 +24,7 @@ func GetTeams(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 }
 
 /*
-GetTeamByID is an API endpoint to get specific User from the application
+GetTeamByID is an API endpoint to get specific Team from the application
 */
 func GetTeamByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	vars := mux.Vars(r)
@@ -81,6 +81,7 @@ func DeleteTeam(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		Name string `json:"name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&teamName); err != nil {
+		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
 	}
 	db.Exec(`DELETE FROM sport_teams WHERE name = $1`, teamName.Name)
 }
