@@ -44,7 +44,7 @@ func GetUserByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 CreateUser is an API endpoint to create a User and add it to the database
 */
 func CreateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	var userData struct {
+	var userData, checkData struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
@@ -54,14 +54,30 @@ func CreateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		return
 	}
 
-	fmt.Println(userData.Username)
-	fmt.Println(userData.Password)
+	db.Exec(`INSERT INTO users(username, password) VALUES ($1, $2)`, userData.Username, userData.Password).Rows()
+	db.Raw(`SELECT * FROM users WHERE username = $1`, userData.Username).Scan(&checkData)
+	if checkData.Username == "" {
+		http.Error(w, "User not found", http.StatusNotFound)
+	}
+}
 
-	_, err := db.Exec(`INSERT INTO users(username, password) VALUES ($1, $2)`, userData.Username, userData.Password).Rows()
-	w.Header().Set("Content-Type", "application/json")
-	addJSON, _ := json.Marshal(err)
-	_, err = w.Write(addJSON)
-	if err != nil {
-		fmt.Println(err)
+func UpdateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	var userData, checkData struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	fmt.Println("here")
+
+	if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
+		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
+		return
+	}
+	fmt.Println(userData.Username + " " + userData.Password)
+	db.Exec(`UPDATE users SET password = $2 WHERE username = $1`, userData.Username, userData.Password)
+	db.Raw(`SELECT * FROM users WHERE username = $1`, userData.Username).Scan(&checkData)
+	fmt.Println(checkData.Username + " " + checkData.Password)
+	if checkData.Username == "" {
+		http.Error(w, "User not found", http.StatusNotFound)
 	}
 }

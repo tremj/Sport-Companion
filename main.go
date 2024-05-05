@@ -35,6 +35,9 @@ func main() {
 	router.HandleFunc("/users/create", func(writer http.ResponseWriter, request *http.Request) {
 		api.CreateUser(writer, request, db)
 	}).Methods("POST")
+	router.HandleFunc("/users/update", func(writer http.ResponseWriter, request *http.Request) {
+		api.UpdateUser(writer, request, db)
+	}).Methods("PUT")
 
 	port := ":8080"
 	fmt.Printf("Listening on port %s...\n", port)
