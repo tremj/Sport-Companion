@@ -33,3 +33,15 @@
         curl -X PUT -H 'Content-Type: application/json' -d '{"new_name": "...", "old_name": "..."}' http://localhost:8080/leagues/update
     DELETE: /leagues/delete ->
         curl -X DELETE -H 'Content-Type: application/json' -d '{"name": "..."}' http://localhost:8080/leagues/delete
+
+/matches endpoints
+    GET: /matches ->
+        curl -X GET http://localhost:8080/matches
+    GET: /matches/{id} ->
+        curl -X GET http://localhost:8080/matches/{...}
+    POST: /matches/create ->
+        curl -X POST -H 'Content-Type: application/json' -d '{"title": "...", "time": "..."}' http://localhost:8080/matches/create
+    PUT: /matches/update ->
+        curl -X PUT -H 'Content-Type: application/json' -d '{"title": "...", "time": "..."}' http://localhost:8080/matches/update
+    DELETE: /matches/delete ->
+        curl -X DELETE -H 'Content-Type: application/json' -d '{"title": "..."}' http://localhost:8080/matches/delete

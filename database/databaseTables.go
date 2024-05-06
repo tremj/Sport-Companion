@@ -13,8 +13,9 @@ type SportTeam struct {
 }
 
 type Match struct {
-	ID   uint `gorm:"primary_key;auto_increment" json:"id"`
-	Time string
+	ID    uint `gorm:"primary_key;auto_increment" json:"id"`
+	Title string
+	Time  string
 }
 
 type League struct {

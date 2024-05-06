@@ -76,7 +76,24 @@ func main() {
 	router.HandleFunc("/leagues/delete", func(writer http.ResponseWriter, request *http.Request) {
 		api.DeleteLeague(writer, request, db)
 	}).Methods("DELETE")
-	
+
+	// matches endpoints
+	router.HandleFunc("/matches", func(writer http.ResponseWriter, request *http.Request) {
+		api.GetMatches(writer, request, db)
+	}).Methods("GET")
+	router.HandleFunc("/matches/{id}", func(writer http.ResponseWriter, request *http.Request) {
+		api.GetMatchByID(writer, request, db)
+	}).Methods("GET")
+	router.HandleFunc("/matches/create", func(writer http.ResponseWriter, request *http.Request) {
+		api.CreateMatch(writer, request, db)
+	}).Methods("POST")
+	router.HandleFunc("/matches/update", func(writer http.ResponseWriter, request *http.Request) {
+		api.UpdateMatch(writer, request, db)
+	}).Methods("PUT")
+	router.HandleFunc("/matches/delete", func(writer http.ResponseWriter, request *http.Request) {
+		api.DeleteMatch(writer, request, db)
+	}).Methods("DELETE")
+
 	port := ":8080"
 	fmt.Printf("Listening on port %s...\n", port)
 	log.Fatal(http.ListenAndServe(port, router))
