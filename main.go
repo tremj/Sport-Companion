@@ -42,6 +42,15 @@ func main() {
 	router.HandleFunc("/users/delete/{username}", func(writer http.ResponseWriter, request *http.Request) {
 		api.DeleteUser(writer, request, db)
 	}).Methods("DELETE")
+	router.HandleFunc("/users/addTeam", func(writer http.ResponseWriter, request *http.Request) {
+		api.LinkTeamToUser(writer, request, db)
+	}).Methods("POST")
+	router.HandleFunc("/users/removeTeam", func(writer http.ResponseWriter, request *http.Request) {
+		api.RemoveTeamFromUser(writer, request, db)
+	}).Methods("DELETE")
+	router.HandleFunc("/users/favourite", func(writer http.ResponseWriter, request *http.Request) {
+		api.GetFavouriteTeams(writer, request, db)
+	}).Methods("GET")
 
 	// sport team endpoints
 	router.HandleFunc("/teams", func(writer http.ResponseWriter, request *http.Request) {
@@ -59,6 +68,9 @@ func main() {
 	router.HandleFunc("/teams/delete", func(writer http.ResponseWriter, request *http.Request) {
 		api.DeleteTeam(writer, request, db)
 	}).Methods("DELETE")
+	//router.HandleFunc("/teams/fans", func(writer http.ResponseWriter, request *http.Request) {
+	//	api.
+	//})
 
 	// league endpoints
 	router.HandleFunc("/leagues", func(writer http.ResponseWriter, request *http.Request) {

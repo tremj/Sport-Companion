@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/tremerj/Sport-Companion/database"
 	"gorm.io/gorm"
@@ -19,7 +18,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err := w.Write(usersJSON)
 	if err != nil {
-		fmt.Println(err)
+		http.Error(w, "error writing response", http.StatusInternalServerError)
 	}
 }
 
@@ -36,7 +35,7 @@ func GetUserByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	userJSON, _ := json.Marshal(user)
 	_, err := w.Write(userJSON)
 	if err != nil {
-		fmt.Println(err)
+		http.Error(w, "error writing response", http.StatusInternalServerError)
 	}
 }
 
@@ -69,8 +68,6 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
-
-	fmt.Println("here")
 
 	if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
 		http.Error(w, "Error parsing JSON", http.StatusBadRequest)

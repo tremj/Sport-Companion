@@ -1,8 +1,8 @@
 /users endpoints
     GET: /users ->
-        curl http://localhost:8080/users
+        curl -X GET http://localhost:8080/users
     GET: /users/{id} ->
-        curl http://localhost:8080/users/{...}
+        curl -X GET http://localhost:8080/users/{...}
     POST: /users/create ->
         curl -X POST -H 'Content-Type: application/json' -d '{"username": "...", "password": "..."}' http://localhost:8080/users/create
     PUT: /users/update ->
@@ -45,3 +45,13 @@
         curl -X PUT -H 'Content-Type: application/json' -d '{"title": "...", "time": "..."}' http://localhost:8080/matches/update
     DELETE: /matches/delete ->
         curl -X DELETE -H 'Content-Type: application/json' -d '{"title": "..."}' http://localhost:8080/matches/delete
+
+add team endpoints
+    POST: /users/addTeam ->
+        curl -X POST -H 'Content-Type: application/json' -d '{"username": "...", "teamname": "..."}' http://localhost:8080/users/addTeam
+    DELETE: /users/removeTeam ->
+        curl -X DELETE -H 'Content-Type: application/json' -d '{"username": "...", "teamname": "..."}' http://localhost:8080/users/removeTeam
+    GET: /users/favouriteTeams
+        curl -X GET -H 'Content-Type: application/json' -d '{"username": "..."}' http://localhost:8080/users/favourite
+    GET: /teams/fans
+        curl -X GET -H 'Content-Type: application/json' -d '{"teamname": "..."}' http://localhost:8080/teams/fans
