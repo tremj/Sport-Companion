@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/tremerj/Sport-Companion/database"
 	"gorm.io/gorm"
@@ -12,6 +13,7 @@ import (
 GetLeagues is an API endpoint to get all Teams in the application
 */
 func GetLeagues(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("GetLeagues")
 	var leagues []database.League
 	db.Raw(`SELECT * FROM leagues`).Scan(&leagues)
 	usersJSON, _ := json.Marshal(leagues)
@@ -26,6 +28,7 @@ func GetLeagues(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 GetLeagueByID is an API endpoint to get specific League from the application
 */
 func GetLeagueByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("GetLeagueByID")
 	vars := mux.Vars(r)
 	id := vars["id"]
 	var league database.SportTeam
@@ -43,6 +46,7 @@ func GetLeagueByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 CreateLeague is an API endpoint to create a League and add it to the database
 */
 func CreateLeague(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("CreateLeague")
 	var leagueData struct {
 		Name  string `json:"name"`
 		Sport string `json:"sport"`
@@ -60,6 +64,7 @@ func CreateLeague(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 UpdateLeague is an API endpoint to update the name of an existing League
 */
 func UpdateLeague(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("UpdateLeague")
 	var leagueData struct {
 		NewName string `json:"new_name"`
 		OldName string `json:"old_name"`
@@ -76,6 +81,7 @@ func UpdateLeague(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 DeleteLeague is an API endpoint that deletes the identified League in the endpoint URL
 */
 func DeleteLeague(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("DeleteLeague")
 	var leagueName struct {
 		Name string `json:"name"`
 	}

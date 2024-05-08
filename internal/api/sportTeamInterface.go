@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/tremerj/Sport-Companion/database"
 	"gorm.io/gorm"
@@ -12,6 +13,7 @@ import (
 GetTeams is an API endpoint to get all Teams in the application
 */
 func GetTeams(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("GetTeams")
 	var teams []database.SportTeam
 	db.Raw(`SELECT * FROM sport_teams`).Scan(&teams)
 	usersJSON, _ := json.Marshal(teams)
@@ -26,6 +28,7 @@ func GetTeams(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 GetTeamByID is an API endpoint to get specific Team from the application
 */
 func GetTeamByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("GetTeamByID")
 	vars := mux.Vars(r)
 	id := vars["id"]
 	var team database.SportTeam
@@ -44,6 +47,7 @@ func GetTeamByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 CreateTeam is an API endpoint to create a Team and add it to the database
 */
 func CreateTeam(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("CreateTeam")
 	var teamData struct {
 		Name     string `json:"name"`
 		Hometown string `json:"hometown"`
@@ -61,6 +65,7 @@ func CreateTeam(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 UpdateTeam is an API endpoint to update the hometown of an existing Team
 */
 func UpdateTeam(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("UpdateTeam")
 	var teamData struct {
 		Name     string `json:"name"`
 		Hometown string `json:"hometown"`
@@ -77,6 +82,7 @@ func UpdateTeam(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 DeleteTeam is an API endpoint that deletes the identified team in the endpoint URL
 */
 func DeleteTeam(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("DeleteTeam")
 	var teamName struct {
 		Name string `json:"name"`
 	}

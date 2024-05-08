@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/tremerj/Sport-Companion/database"
 	"gorm.io/gorm"
@@ -12,6 +13,7 @@ import (
 GetUsers is an API endpoint to get all Users in the application
 */
 func GetUsers(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("GetUsers")
 	var users []database.Users
 	db.Raw(`SELECT * FROM users`).Scan(&users)
 	usersJSON, _ := json.Marshal(users)
@@ -26,6 +28,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 GetUserByID is an API endpoint to get specific User from the application
 */
 func GetUserByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("GetUserByID")
 	vars := mux.Vars(r)
 	id := vars["id"]
 	var user database.Users
@@ -43,6 +46,7 @@ func GetUserByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 CreateUser is an API endpoint to create a User and add it to the database
 */
 func CreateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("CreateUser")
 	var userData, checkData struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -64,6 +68,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 UpdateUser is an API endpoint to update the password of an existing User
 */
 func UpdateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("UpdateUser")
 	var userData struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -80,6 +85,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 DeleteUser is an API endpoint that deletes the identified users in the endpoint URL
 */
 func DeleteUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	fmt.Println("DeleteUser")
 	username := mux.Vars(r)["username"]
 	db.Exec(`DELETE FROM users WHERE username = $1`, username)
 }

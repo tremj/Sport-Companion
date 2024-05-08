@@ -30,7 +30,7 @@ func main() {
 	router.HandleFunc("/users", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetUsers(writer, request, db)
 	}).Methods("GET")
-	router.HandleFunc("/users/{id}", func(writer http.ResponseWriter, request *http.Request) {
+	router.HandleFunc("/users/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetUserByID(writer, request, db)
 	}).Methods("GET")
 	router.HandleFunc("/users/create", func(writer http.ResponseWriter, request *http.Request) {
@@ -48,7 +48,7 @@ func main() {
 	router.HandleFunc("/users/removeTeam", func(writer http.ResponseWriter, request *http.Request) {
 		api.RemoveTeamFromUser(writer, request, db)
 	}).Methods("DELETE")
-	router.HandleFunc("/users/favourite", func(writer http.ResponseWriter, request *http.Request) {
+	router.HandleFunc("/users/favourites", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetFavouriteTeams(writer, request, db)
 	}).Methods("GET")
 

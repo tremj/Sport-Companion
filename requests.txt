@@ -46,12 +46,12 @@
     DELETE: /matches/delete ->
         curl -X DELETE -H 'Content-Type: application/json' -d '{"title": "..."}' http://localhost:8080/matches/delete
 
-add team endpoints
+favourite team endpoints
     POST: /users/addTeam ->
         curl -X POST -H 'Content-Type: application/json' -d '{"username": "...", "teamname": "..."}' http://localhost:8080/users/addTeam
     DELETE: /users/removeTeam ->
         curl -X DELETE -H 'Content-Type: application/json' -d '{"username": "...", "teamname": "..."}' http://localhost:8080/users/removeTeam
-    GET: /users/favouriteTeams
-        curl -X GET -H 'Content-Type: application/json' -d '{"username": "..."}' http://localhost:8080/users/favourite
+    GET: /users/favourites
+        curl -X GET -H 'Content-Type: application/json' -d '{"username": "..."}' http://localhost:8080/users/favourites
     GET: /teams/fans
         curl -X GET -H 'Content-Type: application/json' -d '{"teamname": "..."}' http://localhost:8080/teams/fans
