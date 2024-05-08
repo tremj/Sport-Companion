@@ -102,3 +102,39 @@ func GetFavouriteTeams(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		return
 	}
 }
+
+func GetFans(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	var data struct {
+		TeamName string `json:"teamname"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Unable to parse JSON", http.StatusBadRequest)
+	}
+
+	var teamID uint
+	db.Raw(`SELECT id FROM sport_teams WHERE name = $1`, data.TeamName).Scan(&teamID)
+	if teamID == 0 {
+		http.Error(w, "team not found", http.StatusNotFound)
+	}
+
+	var users []uint
+	db.Raw(`SELECT DISTINCT user_id FROM user_teams WHERE team_id = $1`, teamID).Scan(&users)
+
+	var usernames []string
+	for i := 0; i < len(users); i++ {
+		var user string
+		db.Raw(`SELECT username FROM users WHERE id = $1`, users[i]).Scan(&user)
+		usernames = append(usernames, user)
+	}
+	jsonData, err := json.Marshal(usernames)
+	if err != nil {
+		http.Error(w, "Unable tp convert userData to JSON", http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(jsonData)
+	if err != nil {
+		http.Error(w, "Error writing JSON to response", http.StatusInternalServerError)
+	}
+}

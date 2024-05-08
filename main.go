@@ -56,7 +56,7 @@ func main() {
 	router.HandleFunc("/teams", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetTeams(writer, request, db)
 	}).Methods("GET")
-	router.HandleFunc("/teams/{id}", func(writer http.ResponseWriter, request *http.Request) {
+	router.HandleFunc("/teams/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetTeamByID(writer, request, db)
 	}).Methods("GET")
 	router.HandleFunc("/teams/create", func(writer http.ResponseWriter, request *http.Request) {
@@ -68,15 +68,15 @@ func main() {
 	router.HandleFunc("/teams/delete", func(writer http.ResponseWriter, request *http.Request) {
 		api.DeleteTeam(writer, request, db)
 	}).Methods("DELETE")
-	//router.HandleFunc("/teams/fans", func(writer http.ResponseWriter, request *http.Request) {
-	//	api.
-	//})
+	router.HandleFunc("/teams/fans", func(writer http.ResponseWriter, request *http.Request) {
+		api.GetFans(writer, request, db)
+	}).Methods("GET")
 
 	// league endpoints
 	router.HandleFunc("/leagues", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetLeagues(writer, request, db)
 	}).Methods("GET")
-	router.HandleFunc("/leagues/{id}", func(writer http.ResponseWriter, request *http.Request) {
+	router.HandleFunc("/leagues/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetLeagueByID(writer, request, db)
 	}).Methods("GET")
 	router.HandleFunc("/leagues/create", func(writer http.ResponseWriter, request *http.Request) {
@@ -93,7 +93,7 @@ func main() {
 	router.HandleFunc("/matches", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetMatches(writer, request, db)
 	}).Methods("GET")
-	router.HandleFunc("/matches/{id}", func(writer http.ResponseWriter, request *http.Request) {
+	router.HandleFunc("/matches/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetMatchByID(writer, request, db)
 	}).Methods("GET")
 	router.HandleFunc("/matches/create", func(writer http.ResponseWriter, request *http.Request) {
