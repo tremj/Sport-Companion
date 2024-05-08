@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/tremerj/Sport-Companion/database"
 	"gorm.io/gorm"
@@ -13,7 +12,6 @@ import (
 GetMatches is an API endpoint to get all Matches in the application
 */
 func GetMatches(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	fmt.Println("GetMatches")
 	var matches []database.Match
 	db.Raw(`SELECT * FROM matches`).Scan(&matches)
 	usersJSON, _ := json.Marshal(matches)
@@ -28,7 +26,6 @@ func GetMatches(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 GetMatchByID is an API endpoint to get specific Match from the application
 */
 func GetMatchByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	fmt.Println("GetMatchByID")
 	vars := mux.Vars(r)
 	id := vars["id"]
 	var match database.Match
@@ -46,7 +43,6 @@ func GetMatchByID(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 CreateMatch is an API endpoint to create a Match and add it to the database
 */
 func CreateMatch(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	fmt.Println("CreateMatch")
 	var matchData struct {
 		Title string `json:"title"`
 		Time  string `json:"time"`
@@ -64,7 +60,6 @@ func CreateMatch(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 UpdateMatch is an API endpoint to update the Time of an existing Match
 */
 func UpdateMatch(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	fmt.Println("UpdateMatch")
 	var matchData struct {
 		Title string `json:"title"`
 		Time  string `json:"time"`
@@ -81,7 +76,6 @@ func UpdateMatch(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 DeleteMatch is an API endpoint that deletes the identified Match in the endpoint URL
 */
 func DeleteMatch(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	fmt.Println("DeleteMatch")
 	var matchTitle struct {
 		Title string `json:"title"`
 	}

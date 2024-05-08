@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/tremerj/Sport-Companion/database"
 	"gorm.io/gorm"
 	"net/http"
@@ -12,7 +11,6 @@ import (
 LinkTeamToUser is an API endpoint that will link a User to a Team as a fan
 */
 func LinkTeamToUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	fmt.Println("LinkTeamToUser")
 	var data struct {
 		Username string `json:"username"`
 		TeamName string `json:"teamname"`
@@ -40,7 +38,6 @@ RemoveTeamFromUser is an API endpoint that will remove a team
 from a users favourite teams list and stop tracking their schedule
 */
 func RemoveTeamFromUser(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	fmt.Println("RemoveTeamFromUser")
 	var data struct {
 		Username string `json:"username"`
 		TeamName string `json:"teamname"`
@@ -65,7 +62,6 @@ GetFavouriteTeams is an API endpoint to list all of a user's
 favourite teams
 */
 func GetFavouriteTeams(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	fmt.Println("GetFavouriteTeams")
 	var userData struct {
 		Username string `json:"username"`
 	}
