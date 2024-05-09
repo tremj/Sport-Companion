@@ -71,6 +71,12 @@ func main() {
 	router.HandleFunc("/teams/fans", func(writer http.ResponseWriter, request *http.Request) {
 		api.GetFans(writer, request, db)
 	}).Methods("GET")
+	router.HandleFunc("/teams/addMatch", func(writer http.ResponseWriter, request *http.Request) {
+		api.AddMatchParticipants(writer, request, db)
+	}).Methods("POST")
+	router.HandleFunc("/teams/removeMatch", func(writer http.ResponseWriter, request *http.Request) {
+		api.RemoveMatchParticipant(writer, request, db)
+	}).Methods("DELETE")
 
 	// league endpoints
 	router.HandleFunc("/leagues", func(writer http.ResponseWriter, request *http.Request) {
