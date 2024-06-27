@@ -8,11 +8,19 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
+type TeamSearch struct {
+	Result int `json:"results"`
+	Teams  []struct {
+		ID int `json:"id"`
+	} `json:"response"`
+}
+
 type LeagueSearch struct {
-	Result  int `json:"result"`
+	Result  int `json:"results"`
 	Leagues []struct {
 		ID int `json:"id"`
 	} `json:"response"`
@@ -29,32 +37,29 @@ func showWeekSchedule() {
 
 func addFavourite() {
 	sport := strings.ToLower(os.Args[2])
-	reqURL := buildLeagueSearchURL(sport, strings.ToLower(os.Args[3]))
+	LreqURL := buildLeagueSearchURL(sport, os.Args[3])
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", reqURL, nil)
+	Lreq, err := http.NewRequest("GET", LreqURL, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = godotenv.Load(".env")
+	apiKey := os.Getenv("SPORT_API_KEY")
+
+	Lreq.Header.Add("x-rapidapi-key", apiKey)
+	Lreq.Header.Add("x-rapidapi-host", LreqURL)
+
+	fmt.Println(LreqURL)
+
+	Lres, err := client.Do(Lreq)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer Lres.Body.Close()
 
-	apiKey := os.Getenv("SPORT-API-KEY")
-
-	req.Header.Add("x-rapidapi-key", apiKey)
-	req.Header.Add("x-rapidapi-host", reqURL)
-
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
+	body, err := io.ReadAll(Lres.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,17 +69,79 @@ func addFavourite() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Println(leagueSearch)
 	if leagueSearch.Result == 0 {
 		log.Fatal("No such league exist in the database.")
 	}
-	leagueID := leagueSearch.Leagues[0].ID // first result (better implementation later)
+	leagueID := strconv.Itoa(leagueSearch.Leagues[0].ID) // first result (better implementation later)
+	team := strings.ReplaceAll(os.Args[4], "-", "%20")
+
+	TreqURL := buildTeamSearchURL(sport, team, leagueID)
+
+	Treq, err := http.NewRequest("GET", TreqURL, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	Treq.Header.Add("x-rapidapi-key", apiKey)
+	Treq.Header.Add("x-rapidapi-host", TreqURL)
+
+	Tres, err := client.Do(Treq)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer Tres.Body.Close()
+
+	body, err = io.ReadAll(Tres.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var teamSearch TeamSearch
+	err = json.Unmarshal(body, &teamSearch)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if teamSearch.Result == 0 {
+		log.Fatal("No such team exist in the database.")
+	}
+	teamID := strconv.Itoa(teamSearch.Teams[0].ID)
+	favTeamString := sport + "-" + leagueID + "-" + teamID
+	fmt.Println(favTeamString)
+
+	_, set := os.LookupEnv("FAV_TEAM")
+	if !set {
+		err = os.Setenv("FAV_TEAM", favTeamString)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		newVal := os.Getenv("FAV_TEAM") + ":" + favTeamString
+		err = os.Setenv("FAV_TEAM", newVal)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func addHeader() {
+
 }
 
 func buildLeagueSearchURL(sport string, league string) string {
-	return "https://v1." + sport + ".api-sports.io/teams?league=" + league
+	return "https://v1." + sport + ".api-sports.io/leagues?name=" + league
+}
+
+func buildTeamSearchURL(sport string, team string, leagueID string) string {
+	return "https://v1." + sport + ".api-sports.io/teams?name=" + team + "&league=" + leagueID + "&season=2024"
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 	if len(os.Args) < 2 {
 		showWeekSchedule()
 	} else if os.Args[1] == "-h" || os.Args[1] == "--help" {
