@@ -1,118 +1,94 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/tremerj/Sport-Companion/database"
-	"github.com/tremerj/Sport-Companion/internal/api"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/joho/godotenv"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 )
 
+type LeagueSearch struct {
+	Result  int `json:"result"`
+	Leagues []struct {
+		ID int `json:"id"`
+	} `json:"response"`
+}
+
+func showWeekSchedule() {
+	favTeam := os.Getenv("FAV-TEAM")
+	if favTeam == "" {
+		fmt.Println("You have no favourite teams to check up on!")
+	}
+	// TODO
+	// list all favourite team games for the next week (test with baseball season)
+}
+
+func addFavourite() {
+	sport := strings.ToLower(os.Args[2])
+	reqURL := buildLeagueSearchURL(sport, strings.ToLower(os.Args[3]))
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", reqURL, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = godotenv.Load(".env")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	apiKey := os.Getenv("SPORT-API-KEY")
+
+	req.Header.Add("x-rapidapi-key", apiKey)
+	req.Header.Add("x-rapidapi-host", reqURL)
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var leagueSearch LeagueSearch
+	err = json.Unmarshal(body, &leagueSearch)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if leagueSearch.Result == 0 {
+		log.Fatal("No such league exist in the database.")
+	}
+	leagueID := leagueSearch.Leagues[0].ID // first result (better implementation later)
+}
+
+func buildLeagueSearchURL(sport string, league string) string {
+	return "https://v1." + sport + ".api-sports.io/teams?league=" + league
+}
+
 func main() {
-	db, err := gorm.Open(sqlite.Open("database/companionV2.db"), &gorm.Config{})
-	if err != nil {
-		log.Fatal("failed to connect to database: ", err)
+	if len(os.Args) < 2 {
+		showWeekSchedule()
+	} else if os.Args[1] == "-h" || os.Args[1] == "--help" {
+		fmt.Println("Usage: 'Sport-Companion' to see next matches of your favourite teams")
+		fmt.Println("Usage: 'Sport-Companion [-a|--add] <sport> <league> <team>' to add a team to your watchlist")
+		fmt.Println("Accepted sports are:")
+		fmt.Printf("\tAFL\n\tBaseball\n\tBasketball\n\tFootball\n\tFormula-1\n\tHandball\n\tHockey\n\tMMA\n\tNBA\n\tNFL\n\tRugby\n\tVolleyball\n")
+		fmt.Println("When writing team names and leagues please ensure that spaces are replaced with '-'")
+		fmt.Println("Example: 'Montreal Canadiens' -> 'Montreal-Canadiens'")
+	} else if os.Args[1] == "-a" || os.Args[1] == "--add" {
+		if len(os.Args) != 5 {
+			fmt.Println("Usage: Sport-Companion [-a|--add] <sport> <league> <team>")
+		} else {
+			addFavourite()
+		}
 	}
-
-	err = db.AutoMigrate(&database.Users{}, &database.SportTeam{},
-		&database.Match{}, &database.League{},
-		&database.UserTeam{}, &database.MatchTeam{}, &database.LeagueTeam{})
-	if err != nil {
-		log.Fatal("Failed to migrate database", err)
-	}
-
-	router := mux.NewRouter()
-
-	// user endpoints
-	router.HandleFunc("/users", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetUsers(writer, request, db)
-	}).Methods("GET")
-	router.HandleFunc("/users/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetUserByID(writer, request, db)
-	}).Methods("GET")
-	router.HandleFunc("/users/create", func(writer http.ResponseWriter, request *http.Request) {
-		api.CreateUser(writer, request, db)
-	}).Methods("POST")
-	router.HandleFunc("/users/update", func(writer http.ResponseWriter, request *http.Request) {
-		api.UpdateUser(writer, request, db)
-	}).Methods("PUT")
-	router.HandleFunc("/users/delete/{username}", func(writer http.ResponseWriter, request *http.Request) {
-		api.DeleteUser(writer, request, db)
-	}).Methods("DELETE")
-	router.HandleFunc("/users/addTeam", func(writer http.ResponseWriter, request *http.Request) {
-		api.LinkTeamToUser(writer, request, db)
-	}).Methods("POST")
-	router.HandleFunc("/users/removeTeam", func(writer http.ResponseWriter, request *http.Request) {
-		api.RemoveTeamFromUser(writer, request, db)
-	}).Methods("DELETE")
-	router.HandleFunc("/users/favourites", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetFavouriteTeams(writer, request, db)
-	}).Methods("GET")
-
-	// sport team endpoints
-	router.HandleFunc("/teams", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetTeams(writer, request, db)
-	}).Methods("GET")
-	router.HandleFunc("/teams/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetTeamByID(writer, request, db)
-	}).Methods("GET")
-	router.HandleFunc("/teams/create", func(writer http.ResponseWriter, request *http.Request) {
-		api.CreateTeam(writer, request, db)
-	}).Methods("POST")
-	router.HandleFunc("/teams/update", func(writer http.ResponseWriter, request *http.Request) {
-		api.UpdateTeam(writer, request, db)
-	}).Methods("PUT")
-	router.HandleFunc("/teams/delete", func(writer http.ResponseWriter, request *http.Request) {
-		api.DeleteTeam(writer, request, db)
-	}).Methods("DELETE")
-	router.HandleFunc("/teams/fans", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetFans(writer, request, db)
-	}).Methods("GET")
-	router.HandleFunc("/teams/addMatch", func(writer http.ResponseWriter, request *http.Request) {
-		api.AddMatchParticipants(writer, request, db)
-	}).Methods("POST")
-	router.HandleFunc("/teams/removeMatch", func(writer http.ResponseWriter, request *http.Request) {
-		api.RemoveMatchParticipant(writer, request, db)
-	}).Methods("DELETE")
-
-	// league endpoints
-	router.HandleFunc("/leagues", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetLeagues(writer, request, db)
-	}).Methods("GET")
-	router.HandleFunc("/leagues/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetLeagueByID(writer, request, db)
-	}).Methods("GET")
-	router.HandleFunc("/leagues/create", func(writer http.ResponseWriter, request *http.Request) {
-		api.CreateLeague(writer, request, db)
-	}).Methods("POST")
-	router.HandleFunc("/leagues/update", func(writer http.ResponseWriter, request *http.Request) {
-		api.UpdateLeague(writer, request, db)
-	}).Methods("PUT")
-	router.HandleFunc("/leagues/delete", func(writer http.ResponseWriter, request *http.Request) {
-		api.DeleteLeague(writer, request, db)
-	}).Methods("DELETE")
-
-	// matches endpoints
-	router.HandleFunc("/matches", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetMatches(writer, request, db)
-	}).Methods("GET")
-	router.HandleFunc("/matches/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
-		api.GetMatchByID(writer, request, db)
-	}).Methods("GET")
-	router.HandleFunc("/matches/create", func(writer http.ResponseWriter, request *http.Request) {
-		api.CreateMatch(writer, request, db)
-	}).Methods("POST")
-	router.HandleFunc("/matches/update", func(writer http.ResponseWriter, request *http.Request) {
-		api.UpdateMatch(writer, request, db)
-	}).Methods("PUT")
-	router.HandleFunc("/matches/delete", func(writer http.ResponseWriter, request *http.Request) {
-		api.DeleteMatch(writer, request, db)
-	}).Methods("DELETE")
-
-	port := ":8080"
-	fmt.Printf("Listening on port %s...\n", port)
-	log.Fatal(http.ListenAndServe(port, router))
 }
