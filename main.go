@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/joho/godotenv"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 type TeamSearch struct {
@@ -42,89 +43,67 @@ func addFavourite() {
 	client := &http.Client{}
 
 	Lreq, err := http.NewRequest("GET", LreqURL, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
 
 	apiKey := os.Getenv("SPORT_API_KEY")
 
 	Lreq.Header.Add("x-rapidapi-key", apiKey)
 	Lreq.Header.Add("x-rapidapi-host", LreqURL)
 
-	fmt.Println(LreqURL)
-
 	Lres, err := client.Do(Lreq)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
 	defer Lres.Body.Close()
 
 	body, err := io.ReadAll(Lres.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
 
 	var leagueSearch LeagueSearch
 	err = json.Unmarshal(body, &leagueSearch)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
 
-	fmt.Println(leagueSearch)
 	if leagueSearch.Result == 0 {
 		log.Fatal("No such league exist in the database.")
 	}
+
 	leagueID := strconv.Itoa(leagueSearch.Leagues[0].ID) // first result (better implementation later)
 	team := strings.ReplaceAll(os.Args[4], "-", "%20")
 
 	TreqURL := buildTeamSearchURL(sport, team, leagueID)
 
 	Treq, err := http.NewRequest("GET", TreqURL, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
 
 	Treq.Header.Add("x-rapidapi-key", apiKey)
 	Treq.Header.Add("x-rapidapi-host", TreqURL)
 
 	Tres, err := client.Do(Treq)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
+
 	defer Tres.Body.Close()
 
 	body, err = io.ReadAll(Tres.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
 
 	var teamSearch TeamSearch
 	err = json.Unmarshal(body, &teamSearch)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
+
 	if teamSearch.Result == 0 {
 		log.Fatal("No such team exist in the database.")
 	}
 	teamID := strconv.Itoa(teamSearch.Teams[0].ID)
 	favTeamString := sport + "-" + leagueID + "-" + teamID
 	fmt.Println(favTeamString)
+	f, err := os.Open(".favourite_teams")
+	logErr(err)
 
-	_, set := os.LookupEnv("FAV_TEAM")
-	if !set {
-		err = os.Setenv("FAV_TEAM", favTeamString)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		newVal := os.Getenv("FAV_TEAM") + ":" + favTeamString
-		err = os.Setenv("FAV_TEAM", newVal)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
 }
 
+func logErr(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 func addHeader() {
 
 }
@@ -151,7 +130,7 @@ func main() {
 		fmt.Printf("\tAFL\n\tBaseball\n\tBasketball\n\tFootball\n\tFormula-1\n\tHandball\n\tHockey\n\tMMA\n\tNBA\n\tNFL\n\tRugby\n\tVolleyball\n")
 		fmt.Println("When writing team names and leagues please ensure that spaces are replaced with '-'")
 		fmt.Println("Example: 'Montreal Canadiens' -> 'Montreal-Canadiens'")
-	} else if os.Args[1] == "-a" || os.Args[1] == "--add" {
+	} else if os.Args[1] == "add" {
 		if len(os.Args) != 5 {
 			fmt.Println("Usage: Sport-Companion [-a|--add] <sport> <league> <team>")
 		} else {
