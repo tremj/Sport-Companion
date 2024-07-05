@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -45,53 +44,69 @@ func buildTeamSearchURL(sport string, team string, leagueID string) string {
 	return "https://v1." + sport + ".api-sports.io/teams?name=" + team + "&league=" + leagueID + "&season=2024"
 }
 
-func getLeagueID(client *http.Client, requestURL string, apiKey string) string {
-	Lreq, err := http.NewRequest("GET", requestURL, nil)
-	logErr(err)
-
-	Lreq.Header.Add("x-rapidapi-key", apiKey)
-	Lreq.Header.Add("x-rapidapi-host", requestURL)
-
-	Lres, err := client.Do(Lreq)
-	logErr(err)
-	body, err := io.ReadAll(Lres.Body)
-	Lres.Body.Close()
-	logErr(err)
-
-	var leagueSearch LeagueSearch
-	err = json.Unmarshal(body, &leagueSearch)
-	logErr(err)
-
-	if leagueSearch.Result == 0 {
-		log.Fatal("No such league exist in the database.")
-	}
-
-	return strconv.Itoa(leagueSearch.Leagues[0].ID) // first result (better implementation later)
-}
-
-func getTeamID(client *http.Client, requestURL string, apiKey string) string {
+func getLeagueID(client *http.Client, requestURL string, apiKey string) (string, string) {
 	req, err := http.NewRequest("GET", requestURL, nil)
-	logErr(err)
+	if err != nil {
+		return "", "Error instanciating new request"
+	}
 
 	req.Header.Add("x-rapidapi-key", apiKey)
 	req.Header.Add("x-rapidapi-host", requestURL)
 
 	res, err := client.Do(req)
-	logErr(err)
+	if err != nil {
+		return "", "Error fulfilling API request"
+	}
+	body, err := io.ReadAll(res.Body)
+	res.Body.Close()
+	if err != nil {
+		return "", "Error reading JSON response body"
+	}
+
+	var leagueSearch LeagueSearch
+	err = json.Unmarshal(body, &leagueSearch)
+	if err != nil {
+		return "", "Error parsing JSON reponse body"
+	}
+
+	if leagueSearch.Result == 0 {
+		return "", "No such league exist in the database"
+	}
+
+	return strconv.Itoa(leagueSearch.Leagues[0].ID), ""
+}
+
+func getTeamID(client *http.Client, requestURL string, apiKey string) (string, string) {
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return "", "Error instanciating new request"
+	}
+
+	req.Header.Add("x-rapidapi-key", apiKey)
+	req.Header.Add("x-rapidapi-host", requestURL)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return "", "Error fulfilling API request"
+	}
 
 	body, err := io.ReadAll(res.Body)
 	res.Body.Close()
-	logErr(err)
+	if err != nil {
+		return "", "Error reading JSON response body"
+	}
 
 	var teamSearch TeamSearch
 	err = json.Unmarshal(body, &teamSearch)
-	logErr(err)
-
-	if teamSearch.Result == 0 {
-		log.Fatal("No such team exist in the database.")
+	if err != nil {
+		return "", "Error parsing JSON response body"
 	}
 
-	return strconv.Itoa(teamSearch.Teams[0].ID)
+	if teamSearch.Result == 0 {
+		return "", "No such team exists in the database"
+	}
+
+	return strconv.Itoa(teamSearch.Teams[0].ID), ""
 }
 
 func isAlreadySelected(aFavourite string) bool {
@@ -111,17 +126,22 @@ func isAlreadySelected(aFavourite string) bool {
 	return false
 }
 
-func writeToFavourite(aFavourite string) {
+func writeToFavourite(aFavourite string) string {
 	if isAlreadySelected(aFavourite) {
-		log.Fatal("Team has already been added to your watchlist")
+		return "Team is already on your watchlist"
 	} else {
 		f, err := os.OpenFile(".favourite_teams", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return "There was an error opening the watchlist file"
+		}
 		defer f.Close()
-		logErr(err)
 
 		_, err = f.WriteString(aFavourite + "\n")
-		logErr(err)
+		if err != nil {
+			return "There was an error writing to the watchlist file"
+		}
 	}
+	return ""
 }
 
 func addFavourite() {
@@ -130,26 +150,32 @@ func addFavourite() {
 	LreqURL := buildLeagueSearchURL(sport, os.Args[3])
 	client := &http.Client{}
 
-	leagueID := getLeagueID(client, LreqURL, apiKey) // first result (better implementation later)
+	leagueID, errString := getLeagueID(client, LreqURL, apiKey)
+	if leagueID == "" {
+		fmt.Println(errString)
+		return
+	}
 
 	team := strings.ReplaceAll(os.Args[4], " ", "%20")
 	TreqURL := buildTeamSearchURL(sport, team, leagueID)
 
-	teamID := getTeamID(client, TreqURL, apiKey)
+	teamID, errString := getTeamID(client, TreqURL, apiKey)
+	if teamID == "" {
+		fmt.Println(errString)
+		return
+	}
 
-	favTeamString := sport + "," + leagueID + "," + teamID
-
-	writeToFavourite(favTeamString)
-}
-
-func logErr(err error) {
-	if err != nil {
-		log.Fatal(err)
+	code := writeToFavourite(sport + "," + leagueID + "," + teamID)
+	if code != "" {
+		fmt.Println(code)
 	}
 }
 
 func addMMAFavourite() {
-	writeToFavourite("mma")
+	code := writeToFavourite("mma")
+	if code != "" {
+		fmt.Println(code)
+	}
 }
 
 func buildF1URL(choice string, supporting string) string {
@@ -161,10 +187,20 @@ func addF1Favourite() {
 	apiKey := os.Getenv("SPORT_API_KEY")
 	choice := os.Args[3]
 	supporting := os.Args[4]
+
 	reqURL := buildF1URL(choice, supporting)
 	client := &http.Client{}
-	supportID := getTeamID(client, reqURL, apiKey)
-	writeToFavourite("formula-1," + choice + "," + supportID)
+
+	teamID, errString := getTeamID(client, reqURL, apiKey)
+	if teamID == "" {
+		fmt.Println(errString)
+		return
+	}
+
+	code := writeToFavourite("formula-1," + choice + "," + teamID)
+	if code != "" {
+		fmt.Println(code)
+	}
 }
 
 func buildOddURL(league string, team string) string {
@@ -179,38 +215,172 @@ func addOddFavourite() {
 	apiKey := os.Getenv("SPORT_API_KEY")
 	league := os.Args[2]
 	team := os.Args[3]
+
 	reqURL := buildOddURL(league, team)
 	client := &http.Client{}
-	teamID := getTeamID(client, reqURL, apiKey)
-	writeToFavourite(league + "," + teamID)
+
+	teamID, errString := getTeamID(client, reqURL, apiKey)
+	if teamID == "" {
+		fmt.Println(errString)
+		return
+	}
+
+	code := writeToFavourite(league + "," + teamID)
+	if code != "" {
+		fmt.Println(code)
+	}
+}
+
+func removeFromFile(aFavourite string) {
+	f, err := os.Open(".favourite_teams")
+	if err != nil {
+		fmt.Println("No teams have been added to your watchlist")
+		return
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	var lines []string
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line != aFavourite {
+			lines = append(lines, line)
+		}
+	}
+
+	if err = scanner.Err(); err != nil {
+		fmt.Println("Error reading the file")
+		return
+	}
+
+	f, err = os.Create(".favourite_teams")
+	if err != nil {
+		fmt.Println("Error creating favourite team file")
+		return
+	}
+	defer f.Close()
+
+	writer := bufio.NewWriter(f)
+	for _, line := range lines {
+		_, err = writer.WriteString(line)
+		if err != nil {
+			fmt.Println("Error writing to the file")
+			return
+		}
+	}
+}
+
+func removeMMAFavourite() {
+	removeFromFile("mma")
+}
+
+func removeF1Favourite() {
+	apiKey := os.Getenv("SPORT_API_KEY")
+	choice := os.Args[3]
+	supporting := os.Args[4]
+
+	reqURL := buildF1URL(choice, supporting)
+	client := &http.Client{}
+
+	teamID, errString := getTeamID(client, reqURL, apiKey)
+	if teamID == "" {
+		fmt.Println(errString)
+		return
+	}
+
+	removeFromFile("formula-1," + choice + "," + teamID)
+}
+
+func removeOddFavourite() {
+	apiKey := os.Getenv("SPORT_API_KEY")
+	league := os.Args[2]
+	team := os.Args[3]
+
+	reqURL := buildOddURL(league, team)
+	client := &http.Client{}
+
+	teamID, errString := getTeamID(client, reqURL, apiKey)
+	if teamID == "" {
+		fmt.Println(errString)
+		return
+	}
+
+	removeFromFile(league + "," + teamID)
+}
+
+func removeFavourite() {
+	apiKey := os.Getenv("SPORT_API_KEY")
+	sport := strings.ToLower(os.Args[2])
+	LreqURL := buildLeagueSearchURL(sport, os.Args[3])
+	client := &http.Client{}
+
+	leagueID, errString := getLeagueID(client, LreqURL, apiKey)
+	if leagueID == "" {
+		fmt.Println(errString)
+		return
+	}
+
+	team := strings.ReplaceAll(os.Args[4], " ", "%20")
+	TreqURL := buildTeamSearchURL(sport, team, leagueID)
+
+	teamID, errString := getTeamID(client, TreqURL, apiKey)
+	if teamID == "" {
+		fmt.Println(errString)
+		return
+	}
+
+	removeFromFile(sport + "," + leagueID + "," + teamID)
+}
+
+func handleAdd() {
+	if os.Args[2] == "MMA" && len(os.Args) == 3 {
+		addMMAFavourite()
+	} else if os.Args[2] == "Formula-1" && len(os.Args) == 5 {
+		addF1Favourite()
+	} else if (os.Args[2] == "NFL" || os.Args[2] == "NBA") && len(os.Args) == 4 {
+		addOddFavourite()
+	} else if len(os.Args) == 5 {
+		addFavourite()
+	} else {
+		fmt.Println("Incorrect usage, please verify that you have the correct amount of command line arguments")
+	}
+}
+
+func handleRemove() {
+	if os.Args[2] == "MMA" && len(os.Args) == 3 {
+		removeMMAFavourite()
+	} else if os.Args[2] == "Formula-1" && len(os.Args) == 5 {
+		removeF1Favourite()
+	} else if (os.Args[2] == "NFL" || os.Args[2] == "NBA") && len(os.Args) == 4 {
+		removeOddFavourite()
+	} else if len(os.Args) == 5 {
+		removeFavourite()
+	} else {
+		fmt.Println("Incorrect usage, please verify that you have the correct amount of command line arguments")
+	}
 }
 
 func main() {
 	err := godotenv.Load()
-	logErr(err)
+	if err != nil {
+		fmt.Println("Error loading env variables")
+		return
+	}
 	if len(os.Args) < 2 {
 		showWeekSchedule()
 	} else if os.Args[1] == "help" {
-		fmt.Println("Usage: 'Sport-Companion' to see next matches of your favourite teams")
-		fmt.Println("Usage: 'Sport-Companion add <sport> <league> <team>' to add a team to your watchlist")
+		fmt.Println("Usage: 'Sport-Companion schedule' to see next matches of your favourite teams")
+		fmt.Println("General usage: 'Sport-Companion <add|remove> <sport> <league> <team>' to add a team to your watchlist")
 		fmt.Println("Accepted sports are:")
 		fmt.Printf("\tAFL\n\tBaseball\n\tBasketball\n\tFootball\n\tFormula-1\n\tHandball\n\tHockey\n\tMMA\n\tNBA\n\tNFL\n\tRugby\n\tVolleyball\n")
-		fmt.Println("When trying to add teams to your list from NBA or NFL no not specify the sport argument")
-		fmt.Println("Formula 1 usage goes as such: Sport-Companion add Formula-1 <team|driver> <team name|driver name>")
+		fmt.Println("When trying to add/remove teams to your list from NBA or NFL no not specify the sport argument")
+		fmt.Println("Formula 1 usage goes as such: Sport-Companion <add|remove> Formula-1 <team|driver> <team name|driver name>")
 		fmt.Println("If you want to add MMA to your watchlist simply write MMA after add do not specify league or team arguments:w")
 		fmt.Println("When writing team names and leagues please ensure that if there are spaces in the team or league name to surround it with double quotes -> \"")
 		fmt.Println("Example: 'Montreal Canadiens' -> 'Montreal-Canadiens'")
 	} else if os.Args[1] == "add" {
-		if os.Args[2] == "MMA" {
-			addMMAFavourite()
-		} else if os.Args[2] == "Formula-1" {
-			addF1Favourite()
-		} else if os.Args[2] == "NFL" || os.Args[2] == "NBA" {
-			addOddFavourite()
-		} else if len(os.Args) != 5 {
-			fmt.Println("Usage: Sport-Companion add <sport> <league> <team>")
-		} else {
-			addFavourite()
-		}
+		handleAdd()
+	} else if os.Args[1] == "remove" {
+		handleRemove()
 	}
 }
