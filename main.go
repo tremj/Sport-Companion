@@ -97,7 +97,9 @@ func getTeamID(client *http.Client, requestURL string, apiKey string) string {
 func isAlreadySelected(aFavourite string) bool {
 	f, err := os.Open(".favourite_teams")
 	defer f.Close()
-	logErr(err)
+	if err != nil {
+		return false
+	}
 	fScanner := bufio.NewScanner(f)
 	fScanner.Split(bufio.ScanLines)
 
