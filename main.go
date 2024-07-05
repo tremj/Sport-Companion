@@ -70,17 +70,17 @@ func getLeagueID(client *http.Client, requestURL string, apiKey string) string {
 }
 
 func getTeamID(client *http.Client, requestURL string, apiKey string) string {
-	Treq, err := http.NewRequest("GET", requestURL, nil)
+	req, err := http.NewRequest("GET", requestURL, nil)
 	logErr(err)
 
-	Treq.Header.Add("x-rapidapi-key", apiKey)
-	Treq.Header.Add("x-rapidapi-host", requestURL)
+	req.Header.Add("x-rapidapi-key", apiKey)
+	req.Header.Add("x-rapidapi-host", requestURL)
 
-	Tres, err := client.Do(Treq)
+	res, err := client.Do(req)
 	logErr(err)
 
-	body, err := io.ReadAll(Tres.Body)
-	Tres.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	res.Body.Close()
 	logErr(err)
 
 	var teamSearch TeamSearch
@@ -135,7 +135,7 @@ func addFavourite() {
 
 	teamID := getTeamID(client, TreqURL, apiKey)
 
-	favTeamString := sport + "-" + leagueID + "-" + teamID
+	favTeamString := sport + "," + leagueID + "," + teamID
 
 	writeToFavourite(favTeamString)
 }
@@ -147,14 +147,45 @@ func logErr(err error) {
 }
 
 func addMMAFavourite() {
+	writeToFavourite("mma")
+}
 
+func buildF1URL(choice string, supporting string) string {
+	choice = choice + "s"
+	return "https://v1.formula-1.api-sports.io/" + choice + "?name=" + strings.ReplaceAll(supporting, " ", "%20")
+}
+
+func addF1Favourite() {
+	apiKey := os.Getenv("SPORT_API_KEY")
+	choice := os.Args[3]
+	supporting := os.Args[4]
+	reqURL := buildF1URL(choice, supporting)
+	client := &http.Client{}
+	supportID := getTeamID(client, reqURL, apiKey)
+	writeToFavourite("formula-1," + choice + "," + supportID)
+}
+
+func buildOddURL(league string, team string) string {
+	prefix := "v1.american-football"
+	if league == "NBA" {
+		prefix = "v2.nba"
+	}
+	return "https://" + prefix + ".api-sports.io/teams?name=" + strings.ReplaceAll(team, " ", "%20")
+}
+
+func addOddFavourite() {
+	apiKey := os.Getenv("SPORT_API_KEY")
+	league := os.Args[2]
+	team := os.Args[3]
+	reqURL := buildOddURL(league, team)
+	client := &http.Client{}
+	teamID := getTeamID(client, reqURL, apiKey)
+	writeToFavourite(league + "," + teamID)
 }
 
 func main() {
 	err := godotenv.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
+	logErr(err)
 	if len(os.Args) < 2 {
 		showWeekSchedule()
 	} else if os.Args[1] == "help" {
@@ -162,15 +193,19 @@ func main() {
 		fmt.Println("Usage: 'Sport-Companion add <sport> <league> <team>' to add a team to your watchlist")
 		fmt.Println("Accepted sports are:")
 		fmt.Printf("\tAFL\n\tBaseball\n\tBasketball\n\tFootball\n\tFormula-1\n\tHandball\n\tHockey\n\tMMA\n\tNBA\n\tNFL\n\tRugby\n\tVolleyball\n")
-		fmt.Println("When trying to add teams to your list from Formula-1, NBA, NFL no not specify the sport argument")
+		fmt.Println("When trying to add teams to your list from NBA or NFL no not specify the sport argument")
+		fmt.Println("Formula 1 usage goes as such: Sport-Companion add Formula-1 <team|driver> <team name|driver name>")
 		fmt.Println("If you want to add MMA to your watchlist simply write MMA after add do not specify league or team arguments:w")
 		fmt.Println("When writing team names and leagues please ensure that if there are spaces in the team or league name to surround it with double quotes -> \"")
 		fmt.Println("Example: 'Montreal Canadiens' -> 'Montreal-Canadiens'")
 	} else if os.Args[1] == "add" {
 		if os.Args[2] == "MMA" {
 			addMMAFavourite()
-		}
-		if len(os.Args) != 5 {
+		} else if os.Args[2] == "Formula-1" {
+			addF1Favourite()
+		} else if os.Args[2] == "NFL" || os.Args[2] == "NBA" {
+			addOddFavourite()
+		} else if len(os.Args) != 5 {
 			fmt.Println("Usage: Sport-Companion add <sport> <league> <team>")
 		} else {
 			addFavourite()
