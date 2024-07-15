@@ -237,15 +237,22 @@ func removeFromFile(aFavourite string) {
 		fmt.Println("No teams have been added to your watchlist")
 		return
 	}
-	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
+	detected := false
 	var lines []string
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line != aFavourite {
 			lines = append(lines, line)
+		} else {
+			detected = true
 		}
+	}
+
+	if !detected {
+		fmt.Println("No such team in your favourites")
+		return
 	}
 
 	if err = scanner.Err(); err != nil {
@@ -253,16 +260,17 @@ func removeFromFile(aFavourite string) {
 		return
 	}
 
-	f, err = os.Create(".favourite_teams")
+	f.Close()
+
+	g, err := os.OpenFile(".favourite_teams", os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Println("Error creating favourite team file")
 		return
 	}
-	defer f.Close()
+	defer g.Close()
 
-	writer := bufio.NewWriter(f)
 	for _, line := range lines {
-		_, err = writer.WriteString(line)
+		_, err = g.WriteString(line + "\n")
 		if err != nil {
 			fmt.Println("Error writing to the file")
 			return
@@ -360,6 +368,15 @@ func handleRemove() {
 	}
 }
 
+func handleClear() {
+	f, err := os.OpenFile("./.favourite_teams", os.O_TRUNC, 0644)
+	if err != nil {
+		fmt.Println("Error accessing favourite teams")
+		return
+	}
+	defer f.Close()
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -382,5 +399,7 @@ func main() {
 		handleAdd()
 	} else if os.Args[1] == "remove" {
 		handleRemove()
+	} else if os.Args[1] == "clear" {
+		handleClear()
 	}
 }
