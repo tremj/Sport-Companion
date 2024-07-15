@@ -377,6 +377,18 @@ func handleClear() {
 	defer f.Close()
 }
 
+func handleHelp() {
+	fmt.Println("Usage: 'Sport-Companion schedule' to see next matches of your favourite teams")
+	fmt.Println("General usage: 'Sport-Companion <add|remove> <sport> <league> <team>' to add a team to your watchlist")
+	fmt.Println("Accepted sports are:")
+	fmt.Printf("\tAFL\n\tBaseball\n\tBasketball\n\tFootball\n\tFormula-1\n\tHandball\n\tHockey\n\tMMA\n\tNBA\n\tNFL\n\tRugby\n\tVolleyball\n")
+	fmt.Println("When trying to add/remove teams to your list from NBA or NFL no not specify the sport argument")
+	fmt.Println("Formula 1 usage goes as such: Sport-Companion <add|remove> Formula-1 <team|driver> <team name|driver name>")
+	fmt.Println("If you want to add MMA to your watchlist simply write MMA after add do not specify league or team arguments:w")
+	fmt.Println("When writing team names and leagues please ensure that if there are spaces in the team or league name to surround it with double quotes -> \"")
+	fmt.Println("Example: Montreal Canadiens -> \"Montreal Canadiens\"")
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -385,21 +397,20 @@ func main() {
 	}
 	if len(os.Args) < 2 {
 		showWeekSchedule()
-	} else if os.Args[1] == "help" {
-		fmt.Println("Usage: 'Sport-Companion schedule' to see next matches of your favourite teams")
-		fmt.Println("General usage: 'Sport-Companion <add|remove> <sport> <league> <team>' to add a team to your watchlist")
-		fmt.Println("Accepted sports are:")
-		fmt.Printf("\tAFL\n\tBaseball\n\tBasketball\n\tFootball\n\tFormula-1\n\tHandball\n\tHockey\n\tMMA\n\tNBA\n\tNFL\n\tRugby\n\tVolleyball\n")
-		fmt.Println("When trying to add/remove teams to your list from NBA or NFL no not specify the sport argument")
-		fmt.Println("Formula 1 usage goes as such: Sport-Companion <add|remove> Formula-1 <team|driver> <team name|driver name>")
-		fmt.Println("If you want to add MMA to your watchlist simply write MMA after add do not specify league or team arguments:w")
-		fmt.Println("When writing team names and leagues please ensure that if there are spaces in the team or league name to surround it with double quotes -> \"")
-		fmt.Println("Example: 'Montreal Canadiens' -> 'Montreal-Canadiens'")
-	} else if os.Args[1] == "add" {
-		handleAdd()
-	} else if os.Args[1] == "remove" {
-		handleRemove()
-	} else if os.Args[1] == "clear" {
-		handleClear()
+	} else {
+		switch os.Args[1] {
+		case "add":
+			handleAdd()
+		case "clear":
+			handleClear()
+		case "help":
+			handleHelp()
+		case "list":
+			handleList()
+		case "remove":
+			handleRemove()
+		default:
+			fmt.Println("Unknown command")
+		}
 	}
 }
