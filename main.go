@@ -16,7 +16,8 @@ import (
 type TeamSearch struct {
 	Result int `json:"results"`
 	Teams  []struct {
-		ID int `json:"id"`
+		ID   int    `json:"id"`
+		Name string `json:"name"`
 	} `json:"response"`
 }
 
@@ -25,15 +26,6 @@ type LeagueSearch struct {
 	Leagues []struct {
 		ID int `json:"id"`
 	} `json:"response"`
-}
-
-func showWeekSchedule() {
-	favTeam := os.Getenv("FAV-TEAM")
-	if favTeam == "" {
-		fmt.Println("You have no favourite teams to check up on!")
-	}
-	// TODO
-	// list all favourite team games for the next week (test with baseball season)
 }
 
 func buildLeagueSearchURL(sport string, league string) string {
@@ -387,6 +379,76 @@ func handleHelp() {
 	fmt.Println("If you want to add MMA to your watchlist simply write MMA after add do not specify league or team arguments:w")
 	fmt.Println("When writing team names and leagues please ensure that if there are spaces in the team or league name to surround it with double quotes -> \"")
 	fmt.Println("Example: Montreal Canadiens -> \"Montreal Canadiens\"")
+}
+
+func printTeam(team string) string {
+	var url string
+	var host string
+	args := strings.Split(team, ",")
+
+	switch strings.ToLower(args[0]) {
+	case "mma":
+		fmt.Println("MMA")
+		return ""
+	case "nba":
+		url = "https://v2.nba.api-sports.io/teams?id=" + args[1]
+		host = "v2.nba.api-sports.io"
+	case "nfl":
+		url = "https://v1.american-football.api-sports.io/teams?id=" + args[1]
+		host = "v1.american-football.api-sports.io"
+	default:
+		url = "https://v1." + args[0] + ".api-sports.io/teams?id=" + args[2] + "&league=" + args[1] + "&season=2024"
+		host = "v1." + args[0] + "api-sports.io"
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err.Error()
+	}
+
+	client := &http.Client{}
+
+	req.Header.Add("x-rapidapi-key", os.Getenv("SPORT_API_KEY"))
+	req.Header.Add("x-rapidapi-host", host)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return err.Error()
+	}
+
+	body, err := io.ReadAll(res.Body)
+	res.Body.Close()
+	if err != nil {
+		return err.Error()
+	}
+
+	var teamSearch TeamSearch
+	err = json.Unmarshal(body, &teamSearch)
+	if err != nil {
+		return err.Error()
+	}
+	fmt.Println(teamSearch.Teams[0].Name)
+	return ""
+}
+
+func handleList() {
+	f, err := os.Open(".favourite_teams")
+	if err != nil {
+		fmt.Println("No teams have been added to your watchlist")
+		return
+	}
+
+	var lines []string
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+}
+
+func showWeekSchedule() {
+	// TODO
+	// list all teams in the favourite team file
+
 }
 
 func main() {
