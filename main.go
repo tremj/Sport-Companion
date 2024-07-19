@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/joho/godotenv"
 )
@@ -438,11 +439,21 @@ func handleList() {
 		return
 	}
 
-	var lines []string
+	var wg sync.WaitGroup
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+		line := scanner.Text()
+		wg.Add(1)
+		go func(line string) {
+			defer wg.Done()
+			err := printTeam(line)
+			if err != "" {
+				fmt.Println(err)
+			}
+		}(line)
 	}
+
+	wg.Wait()
 }
 
 func showWeekSchedule() {
