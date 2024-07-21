@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -26,6 +27,17 @@ type LeagueSearch struct {
 	Result  int `json:"results"`
 	Leagues []struct {
 		ID int `json:"id"`
+	} `json:"response"`
+}
+
+type GameSearch struct {
+	Results int `json:"results"`
+	Games   []struct {
+		Date  string `json:"date"`
+		Teams struct {
+			Home string `json:"home"`
+			Away string `json:"away"`
+		} `json:"teams"`
 	} `json:"response"`
 }
 
@@ -124,10 +136,10 @@ func writeToFavourite(aFavourite string) string {
 		return "Team is already on your watchlist"
 	} else {
 		f, err := os.OpenFile(".favourite_teams", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		defer f.Close()
 		if err != nil {
 			return "There was an error opening the watchlist file"
 		}
-		defer f.Close()
 
 		_, err = f.WriteString(aFavourite + "\n")
 		if err != nil {
@@ -226,6 +238,7 @@ func addOddFavourite() {
 
 func removeFromFile(aFavourite string) {
 	f, err := os.Open(".favourite_teams")
+	defer f.Close()
 	if err != nil {
 		fmt.Println("No teams have been added to your watchlist")
 		return
@@ -253,14 +266,12 @@ func removeFromFile(aFavourite string) {
 		return
 	}
 
-	f.Close()
-
 	g, err := os.OpenFile(".favourite_teams", os.O_WRONLY|os.O_TRUNC, 0644)
+	defer g.Close()
 	if err != nil {
 		fmt.Println("Error creating favourite team file")
 		return
 	}
-	defer g.Close()
 
 	for _, line := range lines {
 		_, err = g.WriteString(line + "\n")
@@ -362,12 +373,12 @@ func handleRemove() {
 }
 
 func handleClear() {
-	f, err := os.OpenFile("./.favourite_teams", os.O_TRUNC, 0644)
+	f, err := os.OpenFile(".favourite_teams", os.O_TRUNC, 0644)
+	defer f.Close()
 	if err != nil {
 		fmt.Println("Error accessing favourite teams")
 		return
 	}
-	defer f.Close()
 }
 
 func handleHelp() {
@@ -382,49 +393,46 @@ func handleHelp() {
 	fmt.Println("Example: Montreal Canadiens -> \"Montreal Canadiens\"")
 }
 
-func printTeam(team string) string {
-	var url string
-	var host string
+func getHostAndUrl(team string, year string, purpose int8) (string, string) {
+	if year == "" {
+		year = strings.Split(time.DateOnly, "-")[0]
+	}
+
+	var endpoint string
+	// getting teams
+	if purpose == 0 {
+		endpoint = "teams"
+	} else if purpose == 1 {
+		endpoint = "games"
+	}
+	url, host := "", ""
 	args := strings.Split(team, ",")
 
 	switch strings.ToLower(args[0]) {
 	case "mma":
-		fmt.Println("MMA")
-		return ""
+		break
 	case "nba":
-		url = "https://v2.nba.api-sports.io/teams?id=" + args[1]
+		url = "https://v2.nba.api-sports.io/" + endpoint + "?id=" + args[1] + "&season=" + year
 		host = "v2.nba.api-sports.io"
 	case "nfl":
-		url = "https://v1.american-football.api-sports.io/teams?id=" + args[1]
+		url = "https://v1.american-football.api-sports.io/" + endpoint + "?id=" + args[1] + "&season=" + year
 		host = "v1.american-football.api-sports.io"
 	default:
-		url = "https://v1." + args[0] + ".api-sports.io/teams?id=" + args[2] + "&league=" + args[1] + "&season=2024"
+		url = "https://v1." + args[0] + ".api-sports.io/" + endpoint + "?id=" + args[2] + "&league=" + args[1] + "&season=" + year
 		host = "v1." + args[0] + "api-sports.io"
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err.Error()
-	}
+	return url, host
+}
 
-	client := &http.Client{}
-
-	req.Header.Add("x-rapidapi-key", os.Getenv("SPORT_API_KEY"))
-	req.Header.Add("x-rapidapi-host", host)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return err.Error()
-	}
-
-	body, err := io.ReadAll(res.Body)
-	res.Body.Close()
-	if err != nil {
-		return err.Error()
+func printTeam(team string, apiKey string) string {
+	body, errS := makeRequest(team, "", 0)
+	if errS != "" {
+		return errS
 	}
 
 	var teamSearch TeamSearch
-	err = json.Unmarshal(body, &teamSearch)
+	err := json.Unmarshal(body, &teamSearch)
 	if err != nil {
 		return err.Error()
 	}
@@ -434,6 +442,7 @@ func printTeam(team string) string {
 
 func handleList() {
 	f, err := os.Open(".favourite_teams")
+	defer f.Close()
 	if err != nil {
 		fmt.Println("No teams have been added to your watchlist")
 		return
@@ -446,7 +455,7 @@ func handleList() {
 		wg.Add(1)
 		go func(line string) {
 			defer wg.Done()
-			err := printTeam(line)
+			err := printTeam(line, os.Getenv("SPORT_API_KEY"))
 			if err != "" {
 				fmt.Println(err)
 			}
@@ -456,10 +465,91 @@ func handleList() {
 	wg.Wait()
 }
 
-func showWeekSchedule() {
-	// TODO
-	// list all teams in the favourite team file
+func makeRequest(team string, year string, purpose int8) ([]byte, string) {
+	url, host := getHostAndUrl(team, year, purpose)
 
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err.Error()
+	}
+
+	client := &http.Client{}
+
+	req.Header.Add("x-rapidapi-key", os.Getenv("SPORT_API_KEY"))
+	req.Header.Add("x-rapidapi-host", host)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err.Error()
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err.Error()
+	}
+
+	return body, ""
+}
+
+func getWeeklySchedule(year string, month string, day string, team string) string {
+	body, errS := makeRequest(team, year, 1)
+	if errS != "" {
+		return errS
+	}
+
+	var games GameSearch
+	err := json.Unmarshal(body, &games)
+	if err != nil {
+		return err.Error()
+	}
+
+	// sometimes current year is not equivalent to season year in API architecture
+	if games.Results == 0 {
+		yearI, err := strconv.Atoi(year)
+		if err != nil {
+			return err.Error()
+		}
+
+		body, errS = makeRequest(team, strconv.Itoa(yearI-1), 1) // go back 1 year
+		if errS != "" {
+			return errS
+		}
+		err = json.Unmarshal(body, &games)
+	}
+
+	fmt.Println(games.Games[0].Date)
+	return ""
+
+}
+
+func showWeekSchedule() {
+	today := strings.Split(time.DateOnly, "-")
+	year := today[0]
+	month := today[1]
+	day := today[2]
+
+	f, err := os.Open(".favourite_teams")
+	defer f.Close()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var wg sync.WaitGroup
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		wg.Add(1)
+		go func(year string, month string, day string, line string) {
+			defer wg.Done()
+			err := getWeeklySchedule(year, month, day, line)
+			if err != "" {
+				fmt.Println(err)
+			}
+		}(year, month, day, line)
+	}
+
+	wg.Wait()
 }
 
 func main() {
