@@ -31,14 +31,20 @@ type LeagueSearch struct {
 }
 
 type GameSearch struct {
-	Results int `json:"results"`
-	Games   []struct {
-		Date  string `json:"date"`
-		Teams struct {
-			Home string `json:"home"`
-			Away string `json:"away"`
-		} `json:"teams"`
-	} `json:"response"`
+	Results int    `json:"results"`
+	Games   []Game `json:"response"`
+}
+
+type Game struct {
+	Date  string `json:"date"`
+	Teams struct {
+		Home struct {
+			Name string `json:"name"`
+		} `json:"home"`
+		Away struct {
+			Name string `json:"name"`
+		} `json:"away"`
+	} `json:"teams"`
 }
 
 func buildLeagueSearchURL(sport string, league string) string {
@@ -412,13 +418,13 @@ func getHostAndUrl(team string, year string, purpose int8) (string, string) {
 	case "mma":
 		break
 	case "nba":
-		url = "https://v2.nba.api-sports.io/" + endpoint + "?id=" + args[1] + "&season=" + year
+		url = "https://v2.nba.api-sports.io/" + endpoint + "?team=" + args[1] + "&season=" + year
 		host = "v2.nba.api-sports.io"
 	case "nfl":
-		url = "https://v1.american-football.api-sports.io/" + endpoint + "?id=" + args[1] + "&season=" + year
+		url = "https://v1.american-football.api-sports.io/" + endpoint + "?team=" + args[1] + "&season=" + year
 		host = "v1.american-football.api-sports.io"
 	default:
-		url = "https://v1." + args[0] + ".api-sports.io/" + endpoint + "?id=" + args[2] + "&league=" + args[1] + "&season=" + year
+		url = "https://v1." + args[0] + ".api-sports.io/" + endpoint + "?team=" + args[2] + "&league=" + args[1] + "&season=" + year
 		host = "v1." + args[0] + "api-sports.io"
 	}
 
@@ -467,6 +473,7 @@ func handleList() {
 
 func makeRequest(team string, year string, purpose int8) ([]byte, string) {
 	url, host := getHostAndUrl(team, year, purpose)
+	fmt.Println(url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -492,6 +499,19 @@ func makeRequest(team string, year string, purpose int8) ([]byte, string) {
 	return body, ""
 }
 
+func gamesOneWeekAway(games []Game, year string, month string, team string) []Game {
+	var eligible []Game
+	var mid uint8
+	l, r := uint8(0), uint8(len(games)-1)
+	for l <= r {
+		mid = l + (r-l)/2
+
+		if isToday(games[mid], year, month, team) {
+			break
+		}
+	}
+}
+
 func getWeeklySchedule(year string, month string, day string, team string) string {
 	body, errS := makeRequest(team, year, 1)
 	if errS != "" {
@@ -503,7 +523,7 @@ func getWeeklySchedule(year string, month string, day string, team string) strin
 	if err != nil {
 		return err.Error()
 	}
-
+	fmt.Println(games.Results)
 	// sometimes current year is not equivalent to season year in API architecture
 	if games.Results == 0 {
 		yearI, err := strconv.Atoi(year)
@@ -518,13 +538,13 @@ func getWeeklySchedule(year string, month string, day string, team string) strin
 		err = json.Unmarshal(body, &games)
 	}
 
-	fmt.Println(games.Games[0].Date)
+	weekAway := gamesOneWeekAway(games.Games)
 	return ""
 
 }
 
 func showWeekSchedule() {
-	today := strings.Split(time.DateOnly, "-")
+	today := strings.Split(strings.Split(time.Now().String(), " ")[0], "-")
 	year := today[0]
 	month := today[1]
 	day := today[2]
@@ -553,27 +573,31 @@ func showWeekSchedule() {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("Please use one of the valid commands")
+		return
+	}
+
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println("Error loading env variables")
 		return
 	}
-	if len(os.Args) < 2 {
+
+	switch os.Args[1] {
+	case "add":
+		handleAdd()
+	case "clear":
+		handleClear()
+	case "help":
+		handleHelp()
+	case "list":
+		handleList()
+	case "schedule":
 		showWeekSchedule()
-	} else {
-		switch os.Args[1] {
-		case "add":
-			handleAdd()
-		case "clear":
-			handleClear()
-		case "help":
-			handleHelp()
-		case "list":
-			handleList()
-		case "remove":
-			handleRemove()
-		default:
-			fmt.Println("Unknown command")
-		}
+	case "remove":
+		handleRemove()
+	default:
+		fmt.Println("Unknown command")
 	}
 }
