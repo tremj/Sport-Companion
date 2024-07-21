@@ -401,15 +401,18 @@ func handleHelp() {
 
 func getHostAndUrl(team string, year string, purpose int8) (string, string) {
 	if year == "" {
-		year = strings.Split(time.DateOnly, "-")[0]
+		year = strings.Split(time.Now().String(), "-")[0]
 	}
 
 	var endpoint string
+	var identifier string
 	// getting teams
 	if purpose == 0 {
 		endpoint = "teams"
+		identifier = "id"
 	} else if purpose == 1 {
 		endpoint = "games"
+		identifier = "team"
 	}
 	url, host := "", ""
 	args := strings.Split(team, ",")
@@ -418,13 +421,13 @@ func getHostAndUrl(team string, year string, purpose int8) (string, string) {
 	case "mma":
 		break
 	case "nba":
-		url = "https://v2.nba.api-sports.io/" + endpoint + "?team=" + args[1] + "&season=" + year
+		url = "https://v2.nba.api-sports.io/" + endpoint + "?" + identifier + "=" + args[1] + "&season=" + year
 		host = "v2.nba.api-sports.io"
 	case "nfl":
-		url = "https://v1.american-football.api-sports.io/" + endpoint + "?team=" + args[1] + "&season=" + year
+		url = "https://v1.american-football.api-sports.io/" + endpoint + "?" + identifier + "=" + args[1] + "&season=" + year + "&league=1"
 		host = "v1.american-football.api-sports.io"
 	default:
-		url = "https://v1." + args[0] + ".api-sports.io/" + endpoint + "?team=" + args[2] + "&league=" + args[1] + "&season=" + year
+		url = "https://v1." + args[0] + ".api-sports.io/" + endpoint + "?" + identifier + "=" + args[2] + "&league=" + args[1] + "&season=" + year
 		host = "v1." + args[0] + "api-sports.io"
 	}
 
@@ -432,6 +435,7 @@ func getHostAndUrl(team string, year string, purpose int8) (string, string) {
 }
 
 func printTeam(team string, apiKey string) string {
+
 	body, errS := makeRequest(team, "", 0)
 	if errS != "" {
 		return errS
@@ -441,6 +445,13 @@ func printTeam(team string, apiKey string) string {
 	err := json.Unmarshal(body, &teamSearch)
 	if err != nil {
 		return err.Error()
+	}
+	if teamSearch.Result == 0 {
+		body, errS = makeRequest(team, strconv.Itoa(time.Now().Year()-1), 0) // go back 1 year
+		if errS != "" {
+			return errS
+		}
+		err = json.Unmarshal(body, &teamSearch)
 	}
 	fmt.Println(teamSearch.Teams[0].Name)
 	return ""
@@ -473,8 +484,6 @@ func handleList() {
 
 func makeRequest(team string, year string, purpose int8) ([]byte, string) {
 	url, host := getHostAndUrl(team, year, purpose)
-	fmt.Println(url)
-
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err.Error()
@@ -499,21 +508,43 @@ func makeRequest(team string, year string, purpose int8) ([]byte, string) {
 	return body, ""
 }
 
-func gamesOneWeekAway(games []Game, year string, month string, team string) []Game {
+func isToday(game Game) bool {
+	date := strings.Split(game.Date, "T")[0]
+	gameDate, _ := time.Parse("2006-01-02", date)
+	today := time.Now()
+	return gameDate.Equal(today)
+}
+
+func isBeforeToday(game Game) bool {
+	date := strings.Split(game.Date, "T")[0]
+	gameDate, _ := time.Parse("2006-01-02", date)
+	today := time.Now()
+	return gameDate.Before(today)
+}
+
+func gamesOneWeekAway(games []Game, year int, month int, team int) []Game {
 	var eligible []Game
 	var mid uint8
 	l, r := uint8(0), uint8(len(games)-1)
 	for l <= r {
 		mid = l + (r-l)/2
 
-		if isToday(games[mid], year, month, team) {
+		if isToday(games[mid]) {
 			break
+		} else if isBeforeToday(games[mid]) {
+			l = mid
+		} else {
+			r = mid
 		}
 	}
+	// TODO
+	// figure out when to start tracking games
+
+	return eligible
 }
 
-func getWeeklySchedule(year string, month string, day string, team string) string {
-	body, errS := makeRequest(team, year, 1)
+func getWeeklySchedule(team string) string {
+	body, errS := makeRequest(team, strconv.Itoa(time.Now().Year()), 1)
 	if errS != "" {
 		return errS
 	}
@@ -526,29 +557,19 @@ func getWeeklySchedule(year string, month string, day string, team string) strin
 	fmt.Println(games.Results)
 	// sometimes current year is not equivalent to season year in API architecture
 	if games.Results == 0 {
-		yearI, err := strconv.Atoi(year)
-		if err != nil {
-			return err.Error()
-		}
-
-		body, errS = makeRequest(team, strconv.Itoa(yearI-1), 1) // go back 1 year
+		body, errS = makeRequest(team, strconv.Itoa(time.Now().Year()-1), 1) // go back 1 year
 		if errS != "" {
 			return errS
 		}
 		err = json.Unmarshal(body, &games)
 	}
 
-	weekAway := gamesOneWeekAway(games.Games)
+	// weekAway := gamesOneWeekAway(games.Games)
 	return ""
 
 }
 
 func showWeekSchedule() {
-	today := strings.Split(strings.Split(time.Now().String(), " ")[0], "-")
-	year := today[0]
-	month := today[1]
-	day := today[2]
-
 	f, err := os.Open(".favourite_teams")
 	defer f.Close()
 	if err != nil {
@@ -560,13 +581,13 @@ func showWeekSchedule() {
 	for scanner.Scan() {
 		line := scanner.Text()
 		wg.Add(1)
-		go func(year string, month string, day string, line string) {
+		go func(line string) {
 			defer wg.Done()
-			err := getWeeklySchedule(year, month, day, line)
+			err := getWeeklySchedule(line)
 			if err != "" {
 				fmt.Println(err)
 			}
-		}(year, month, day, line)
+		}(line)
 	}
 
 	wg.Wait()
