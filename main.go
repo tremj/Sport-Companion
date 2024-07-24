@@ -434,7 +434,7 @@ func getHostAndUrl(team string, year string, purpose int8) (string, string) {
 	return url, host
 }
 
-func printTeam(team string, apiKey string) string {
+func printTeam(team string) string {
 
 	body, errS := makeRequest(team, "", 0)
 	if errS != "" {
@@ -472,7 +472,7 @@ func handleList() {
 		wg.Add(1)
 		go func(line string) {
 			defer wg.Done()
-			err := printTeam(line, os.Getenv("SPORT_API_KEY"))
+			err := printTeam(line)
 			if err != "" {
 				fmt.Println(err)
 			}
@@ -522,7 +522,7 @@ func isBeforeToday(game Game) bool {
 	return gameDate.Before(today)
 }
 
-func gamesOneWeekAway(games []Game, year int, month int, team int) []Game {
+func gamesOneWeekAway(games []Game) []Game {
 	var eligible []Game
 	var mid uint8
 	l, r := uint8(0), uint8(len(games)-1)
@@ -532,9 +532,9 @@ func gamesOneWeekAway(games []Game, year int, month int, team int) []Game {
 		if isToday(games[mid]) {
 			break
 		} else if isBeforeToday(games[mid]) {
-			l = mid
+			l = mid + 1
 		} else {
-			r = mid
+			r = mid - 1
 		}
 	}
 	// TODO
@@ -562,6 +562,9 @@ func getWeeklySchedule(team string) string {
 			return errS
 		}
 		err = json.Unmarshal(body, &games)
+		if err != nil {
+			return err.Error()
+		}
 	}
 
 	// weekAway := gamesOneWeekAway(games.Games)
