@@ -31,7 +31,7 @@ func HandleAdd() {
 }
 
 func addNHL() {
-	id, err := getTeamID(0)
+	id, err := getTeamID("NHL")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -49,7 +49,7 @@ func addNHLURL(season string) string {
 }
 
 func addNFL() {
-	id, err := getTeamID(1)
+	id, err := getTeamID("NFL")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -67,7 +67,7 @@ func addNFLURL(season string) string {
 }
 
 func addMLB() {
-	id, err := getTeamID(2)
+	id, err := getTeamID("MLB")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -85,7 +85,7 @@ func addMLBURL(season string) string {
 }
 
 func addNBA() {
-	id, err := getTeamID(3)
+	id, err := getTeamID("NBA")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -148,7 +148,7 @@ func isAlreadyAdded(line string) bool {
 	return false
 }
 
-func getTeamID(id int) (string, error) {
+func getTeamID(id string) (string, error) {
 	body, err := makeGenericRequest(0, id)
 	if err != nil {
 		return "", err
@@ -178,7 +178,7 @@ func getTeamID(id int) (string, error) {
 	return strconv.Itoa(teamSearch.Response[0].ID), nil
 }
 
-func makeGenericRequest(back int, id int) ([]byte, error) {
+func makeGenericRequest(back int, id string) ([]byte, error) {
 	url, host := makeGenericURLHost(strconv.Itoa(time.Now().Year()-back), id)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -204,15 +204,15 @@ func makeGenericRequest(back int, id int) ([]byte, error) {
 	return body, nil
 }
 
-func makeGenericURLHost(year string, id int) (string, string) {
-	switch id {
-	case 0: // NHL
+func makeGenericURLHost(year string, id string) (string, string) {
+	switch strings.ToLower(id) {
+	case "nhl":
 		return addNHLURL(year), "https://v1.hockey.api-sports.io"
-	case 1: // NFL
+	case "nfl":
 		return addNFLURL(year), "https://v1.american-football.api-sports.io"
-	case 2: // MLB
+	case "mlb":
 		return addMLBURL(year), "https://v1.baseball.api-sport.io"
-	case 3: //NBA
+	case "nba":
 		return addNBAURL(year), "https://v2.basketball.api-sports.io"
 	}
 	return "", ""

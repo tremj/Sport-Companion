@@ -4,10 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func HandleRemove() {
-
+	id, err := getTeamID(os.Args[2])
+	if err != nil {
+		fmt.Println(err)
+	}
+	removeFromFile(strings.ToUpper(os.Args[2]) + "," + id)
 }
 
 func removeFromFile(aFavourite string) {

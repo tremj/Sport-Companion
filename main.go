@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/tremerj/Sport-Companion/handling"
 )
 
 type TeamSearch struct {
@@ -622,17 +623,17 @@ func main() {
 
 	switch os.Args[1] {
 	case "add":
-		handleAdd()
+		handling.HandleAdd()
 	case "clear":
-		handleClear()
+		handling.HandleClear()
 	case "help":
-		handleHelp()
+		// TODO
 	case "list":
-		handleList()
+		// TODO
 	case "schedule":
-		showWeekSchedule()
+		// TODO
 	case "remove":
-		handleRemove()
+		handling.HandleRemove()
 	default:
 		fmt.Println("Unknown command")
 	}
