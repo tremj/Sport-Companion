@@ -182,13 +182,6 @@ func addFavourite() {
 	}
 }
 
-func addMMAFavourite() {
-	code := writeToFavourite("mma")
-	if code != "" {
-		fmt.Println(code)
-	}
-}
-
 func buildF1URL(choice string, supporting string) string {
 	choice = choice + "s"
 	return "https://v1.formula-1.api-sports.io/" + choice + "?name=" + strings.ReplaceAll(supporting, " ", "%20")
@@ -288,10 +281,6 @@ func removeFromFile(aFavourite string) {
 	}
 }
 
-func removeMMAFavourite() {
-	removeFromFile("mma")
-}
-
 func removeF1Favourite() {
 	apiKey := os.Getenv("SPORT_API_KEY")
 	choice := os.Args[3]
@@ -351,11 +340,7 @@ func removeFavourite() {
 }
 
 func handleAdd() {
-	if os.Args[2] == "MMA" && len(os.Args) == 3 {
-		addMMAFavourite()
-	} else if os.Args[2] == "Formula-1" && len(os.Args) == 5 {
-		addF1Favourite()
-	} else if (os.Args[2] == "NFL" || os.Args[2] == "NBA") && len(os.Args) == 4 {
+	if (os.Args[2] == "NFL" || os.Args[2] == "NBA") && len(os.Args) == 4 {
 		addOddFavourite()
 	} else if len(os.Args) == 5 {
 		addFavourite()
@@ -365,9 +350,7 @@ func handleAdd() {
 }
 
 func handleRemove() {
-	if os.Args[2] == "MMA" && len(os.Args) == 3 {
-		removeMMAFavourite()
-	} else if os.Args[2] == "Formula-1" && len(os.Args) == 5 {
+	if os.Args[2] == "Formula-1" && len(os.Args) == 5 {
 		removeF1Favourite()
 	} else if (os.Args[2] == "NFL" || os.Args[2] == "NBA") && len(os.Args) == 4 {
 		removeOddFavourite()
@@ -391,10 +374,8 @@ func handleHelp() {
 	fmt.Println("Usage: 'Sport-Companion schedule' to see next matches of your favourite teams")
 	fmt.Println("General usage: 'Sport-Companion <add|remove> <sport> <league> <team>' to add a team to your watchlist")
 	fmt.Println("Accepted sports are:")
-	fmt.Printf("\tAFL\n\tBaseball\n\tBasketball\n\tFootball\n\tFormula-1\n\tHandball\n\tHockey\n\tMMA\n\tNBA\n\tNFL\n\tRugby\n\tVolleyball\n")
+	fmt.Printf("\tAFL\n\tBaseball\n\tBasketball\n\tFootball\n\tFormula-1\n\tHandball\n\tHockey\n\tNBA\n\tNFL\n\tRugby\n\tVolleyball\n")
 	fmt.Println("When trying to add/remove teams to your list from NBA or NFL no not specify the sport argument")
-	fmt.Println("Formula 1 usage goes as such: Sport-Companion <add|remove> Formula-1 <team|driver> <team name|driver name>")
-	fmt.Println("If you want to add MMA to your watchlist simply write MMA after add do not specify league or team arguments:w")
 	fmt.Println("When writing team names and leagues please ensure that if there are spaces in the team or league name to surround it with double quotes -> \"")
 	fmt.Println("Example: Montreal Canadiens -> \"Montreal Canadiens\"")
 }
@@ -418,10 +399,8 @@ func getHostAndUrl(team string, year string, purpose int8) (string, string) {
 	args := strings.Split(team, ",")
 
 	switch strings.ToLower(args[0]) {
-	case "mma":
-		break
 	case "nba":
-		url = "https://v2.nba.api-sports.io/" + endpoint + "?" + identifier + "=" + args[1] + "&season=" + year
+		url = "https://v2.nba.api-sports.io/" + endpoint + "?" + identifier + "=" + args[1]
 		host = "v2.nba.api-sports.io"
 	case "nfl":
 		url = "https://v1.american-football.api-sports.io/" + endpoint + "?" + identifier + "=" + args[1] + "&season=" + year + "&league=1"
@@ -435,7 +414,6 @@ func getHostAndUrl(team string, year string, purpose int8) (string, string) {
 }
 
 func printTeam(team string) string {
-
 	body, errS := makeRequest(team, "", 0)
 	if errS != "" {
 		return errS
@@ -522,24 +500,48 @@ func isBeforeToday(game Game) bool {
 	return gameDate.Before(today)
 }
 
-func gamesOneWeekAway(games []Game) []Game {
+func isWeekAway(game Game) bool {
+	date := strings.Split(game.Date, "T")[0]
+	gameDate, _ := time.Parse("2006-01-02", date)
+	today := time.Now()
+	diff := gameDate.Sub(today).Hours()
+	return diff < 168 // 168 hours in 1 week
+}
+
+func formattedWeeklySchedule(games []Game) string {
+	// TODO
+	return ""
+}
+
+func nextWeekSchedule(games []Game) []Game {
 	var eligible []Game
-	var mid uint8
-	l, r := uint8(0), uint8(len(games)-1)
+	var mid, next_i int
+	i := -1
+	l, r := 0, len(games)-1
 	for l <= r {
 		mid = l + (r-l)/2
-
+		fmt.Println(games[mid].Date)
 		if isToday(games[mid]) {
+			i = mid
 			break
-		} else if isBeforeToday(games[mid]) {
+		} else if isBeforeToday(games[mid]) { // arr[i] < target
 			l = mid + 1
 		} else {
+			next_i = mid
 			r = mid - 1
 		}
 	}
-	// TODO
-	// figure out when to start tracking games
 
+	if i != mid {
+		i = next_i
+	}
+
+	for isWeekAway(games[i]) {
+		eligible = append(eligible, games[i])
+		i++
+	}
+
+	// fOut := formattedWeeklySchedule(eligible)
 	return eligible
 }
 
@@ -554,6 +556,7 @@ func getWeeklySchedule(team string) string {
 	if err != nil {
 		return err.Error()
 	}
+	fmt.Println(team)
 	fmt.Println(games.Results)
 	// sometimes current year is not equivalent to season year in API architecture
 	if games.Results == 0 {
@@ -565,9 +568,18 @@ func getWeeklySchedule(team string) string {
 		if err != nil {
 			return err.Error()
 		}
+		if games.Results == 0 {
+			return "No scheduled games"
+		}
 	}
 
-	// weekAway := gamesOneWeekAway(games.Games)
+	weekAway := nextWeekSchedule(games.Games)
+	if len(weekAway) == 0 {
+		fmt.Printf("There are no games this week, the next game is on \n")
+	}
+	for _, g := range weekAway {
+		fmt.Println(g.Date)
+	}
 	return ""
 
 }
@@ -579,21 +591,21 @@ func showWeekSchedule() {
 		fmt.Println(err.Error())
 	}
 
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
-		wg.Add(1)
-		go func(line string) {
-			defer wg.Done()
-			err := getWeeklySchedule(line)
-			if err != "" {
-				fmt.Println(err)
-			}
-		}(line)
+		// wg.Add(1)
+		// go func(line string) {
+		// 	defer wg.Done()
+		err := getWeeklySchedule(line)
+		if err != "" {
+			fmt.Println(err)
+		}
+		// }(line)
 	}
 
-	wg.Wait()
+	// wg.Wait()
 }
 
 func main() {
