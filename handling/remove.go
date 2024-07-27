@@ -17,11 +17,11 @@ func HandleRemove() {
 
 func removeFromFile(aFavourite string) {
 	f, err := os.Open(".favourite_teams")
-	defer f.Close()
 	if err != nil {
 		fmt.Println("No teams have been added to your watchlist")
 		return
 	}
+	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
 	detected := false
@@ -46,11 +46,11 @@ func removeFromFile(aFavourite string) {
 	}
 
 	g, err := os.OpenFile(".favourite_teams", os.O_WRONLY|os.O_TRUNC, 0644)
-	defer g.Close()
 	if err != nil {
 		fmt.Println("Error creating favourite team file")
 		return
 	}
+	defer g.Close()
 
 	for _, line := range lines {
 		_, err = g.WriteString(line + "\n")

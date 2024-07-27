@@ -22,11 +22,11 @@ func HandleList() {
 
 func printTeams() {
 	f, err := os.Open(".favourite_teams")
-	defer f.Close()
 	if err != nil {
 		fmt.Println("No teams have been added to your watchlist")
 		return
 	}
+	defer f.Close()
 
 	var wg sync.WaitGroup
 	scanner := bufio.NewScanner(f)

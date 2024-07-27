@@ -509,11 +509,6 @@ func isWeekAway(game Game) bool {
 	return diff < 168 // 168 hours in 1 week
 }
 
-func formattedWeeklySchedule(games []Game) string {
-	// TODO
-	return ""
-}
-
 func nextWeekSchedule(games []Game) []Game {
 	var eligible []Game
 	var mid, next_i int
@@ -631,7 +626,7 @@ func main() {
 	case "list":
 		handling.HandleList()
 	case "schedule":
-		// TODO
+		handling.HandleSchedule()
 	case "remove":
 		handling.HandleRemove()
 	default:
