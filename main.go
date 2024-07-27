@@ -627,10 +627,9 @@ func main() {
 	case "clear":
 		handling.HandleClear()
 	case "help":
-		// TODO
 		handling.HandleHelp()
 	case "list":
-		// TODO
+		handling.HandleList()
 	case "schedule":
 		// TODO
 	case "remove":
