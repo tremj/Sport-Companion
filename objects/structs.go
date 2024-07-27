@@ -6,15 +6,8 @@ type TeamSearch struct {
 }
 
 type Response struct {
-	ID int `json:"id"`
-}
-
-func (n TeamSearch) GetResults() int {
-	return n.Results
-}
-
-func (n TeamSearch) GetResponse() []Response {
-	return n.Response
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 const NHLLeagueID string = "57"

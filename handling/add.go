@@ -160,7 +160,7 @@ func getTeamID(id string) (string, error) {
 		return "", err
 	}
 
-	if teamSearch.GetResults() == 0 {
+	if teamSearch.Results == 0 {
 		body, err := makeGenericRequest(1, id)
 		if err != nil {
 			return "", err
