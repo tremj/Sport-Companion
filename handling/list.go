@@ -121,7 +121,7 @@ func getURLHost(league string, id string, back int) (string, string) {
 	case "MLB":
 		return listMLBURL(id, back), "https://v1.baseball.api-sports.io"
 	case "NBA":
-		return listNBAURL(id, back), "https://v2.nba.api-sports.io"
+		return listNBAURL(id), "https://v2.nba.api-sports.io"
 	default:
 		return "", ""
 	}
@@ -132,13 +132,13 @@ func listNHLURL(id string, back int) string {
 }
 
 func listNFLURL(id string, back int) string {
-	return "https://v1.american-football.api-sports.io/teams?id=" + id + "&season=" + strconv.Itoa(time.Now().Year()-back)
+	return "https://v1.american-football.api-sports.io/teams?id=" + id + "&league=" + objects.NFLLeagueID + "&season=" + strconv.Itoa(time.Now().Year()-back)
 }
 
 func listMLBURL(id string, back int) string {
 	return "https://v1.baseball.api-sports.io/teams?id=" + id + "&league=" + objects.MLBLeagueID + "&season=" + strconv.Itoa(time.Now().Year()-back)
 }
 
-func listNBAURL(id string, back int) string {
-	return "https://v2.nba.api-sports.io/teams?id=" + id + "&season=" + strconv.Itoa(time.Now().Year()-back)
+func listNBAURL(id string) string {
+	return "https://v2.nba.api-sports.io/teams?id=" + id
 }

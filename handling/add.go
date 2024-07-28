@@ -36,7 +36,7 @@ func addNHL() {
 		fmt.Println(err)
 		return
 	}
-	err = writeToFile("NBA," + id)
+	err = writeToFile("NHL," + id)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -62,8 +62,8 @@ func addNFL() {
 }
 
 func addNFLURL(season string) string {
-	name := strings.ReplaceAll(os.Args[2], " ", "%20")
-	return "https://v1.american-football.api-sports.io/teams?name=" + name + "&league=1&season=" + season
+	name := strings.ReplaceAll(os.Args[3], " ", "%20")
+	return "https://v1.american-football.api-sports.io/teams?name=" + name + "&league=" + objects.NFLLeagueID + "&season=" + season
 }
 
 func addMLB() {
@@ -80,7 +80,7 @@ func addMLB() {
 }
 
 func addMLBURL(season string) string {
-	name := strings.ReplaceAll(os.Args[2], " ", "%20")
+	name := strings.ReplaceAll(os.Args[3], " ", "%20")
 	return "https://v1.baseball.api-sports.io/teams?name=" + name + "&league=" + objects.MLBLeagueID + "&season=" + season
 }
 
@@ -97,9 +97,9 @@ func addNBA() {
 	}
 }
 
-func addNBAURL(season string) string {
-	name := strings.ReplaceAll(os.Args[2], " ", "%20")
-	return "https://v1.baseball.api-sports.io/teams?name=" + name + "&league=" + objects.MLBLeagueID + "&season=" + season
+func addNBAURL() string {
+	name := strings.ReplaceAll(os.Args[3], " ", "%20")
+	return "https://v2.nba.api-sports.io/teams?name=" + name
 }
 
 func addToFile(line string) error {
@@ -171,7 +171,7 @@ func getTeamID(id string) (string, error) {
 			return "", err
 		}
 		if teamSearch.Results == 0 {
-			return "", errors.New("Inputted team is not an NBA team.")
+			return "", errors.New("Inputted team is not an " + id + " team.")
 		}
 	}
 
@@ -213,7 +213,7 @@ func makeGenericURLHost(year string, id string) (string, string) {
 	case "mlb":
 		return addMLBURL(year), "https://v1.baseball.api-sport.io"
 	case "nba":
-		return addNBAURL(year), "https://v2.basketball.api-sports.io"
+		return addNBAURL(), "https://v2.basketball.api-sports.io"
 	}
 	return "", ""
 }

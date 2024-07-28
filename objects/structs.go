@@ -22,13 +22,15 @@ type NHLGame struct {
 	Time  string `json:"time"`
 	Teams struct {
 		Home struct {
-			Name string `json:"home"`
+			Name string `json:"name"`
 		} `json:"home"`
 		Away struct {
-			Name string `json:"away"`
+			Name string `json:"name"`
 		}
 	} `json:"teams"`
 }
+
+const NFLLeagueID string = "1"
 
 type NFLGameSearch struct {
 	Results int       `json:"results"`
