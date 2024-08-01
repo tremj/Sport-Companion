@@ -10,7 +10,7 @@ import (
 	"github.com/tremerj/Sport-Companion/objects"
 )
 
-func NextFiveNFL(id string) (string, error) {
+func NextFiveNFL(id string, name string) (string, error) {
 	url := gameNFLURL(id, 0)
 	body, err := makeGenericGameRequest(url, "https://v1.american-football.api-sports.io")
 	if err != nil {
@@ -41,7 +41,8 @@ func NextFiveNFL(id string) (string, error) {
 	}
 
 	formattedOutput := formattedNFLGames(games.Games)
-	return formattedOutput, nil
+	finalResults := name + ":\n" + formattedOutput + "\n"
+	return finalResults, nil
 }
 
 func gameNFLURL(id string, back int) string {
