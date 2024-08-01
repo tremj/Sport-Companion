@@ -12,6 +12,11 @@ import (
 )
 
 func HandleSchedule() {
+	if len(os.Args) != 2 {
+		fmt.Println("Incorrect usage.")
+		fmt.Println("Correct usage: Sport-Companion schedule")
+		return
+	}
 	printSchedule()
 }
 
@@ -25,6 +30,7 @@ func printSchedule() {
 	for _, v := range result {
 		fmt.Printf("%s", v)
 	}
+	fmt.Print("\033[A")
 }
 
 func getSchedule() ([]string, error) {
@@ -76,13 +82,13 @@ func getNextFiveGames(line string) (string, error) {
 	arr := strings.Split(line, ",")
 	switch arr[0] {
 	case "NHL":
-		return scheduling.NextFiveNHL(arr[1])
+		return scheduling.NextFiveNHL(arr[1], arr[2])
 	case "NFL":
-		return scheduling.NextFiveNFL(arr[1])
+		return scheduling.NextFiveNFL(arr[1], arr[2])
 	case "MLB":
-		return scheduling.NextFiveMLB(arr[1])
+		return scheduling.NextFiveMLB(arr[1], arr[2])
 	case "NBA":
-		return scheduling.NextFiveNBA(arr[1])
+		return scheduling.NextFiveNBA(arr[1], arr[2])
 	default:
 		return "", errors.New("Unknown behavior")
 	}

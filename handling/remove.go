@@ -8,11 +8,12 @@ import (
 )
 
 func HandleRemove() {
-	id, err := getTeamID(os.Args[2])
-	if err != nil {
-		fmt.Println(err)
+	if len(os.Args) != 3 {
+		fmt.Println("Incorrect usage.")
+		fmt.Println("Hint: Sport-Companion remove <teamname>")
+		return
 	}
-	removeFromFile(strings.ToUpper(os.Args[2]) + "," + id)
+	removeFromFile(os.Args[2])
 }
 
 func removeFromFile(aFavourite string) {
@@ -27,9 +28,9 @@ func removeFromFile(aFavourite string) {
 	detected := false
 	var lines []string
 	for scanner.Scan() {
-		line := scanner.Text()
-		if line != aFavourite {
-			lines = append(lines, line)
+		line := strings.Split(scanner.Text(), ",")
+		if line[2] != aFavourite {
+			lines = append(lines, strings.Join(line, ","))
 		} else {
 			detected = true
 		}

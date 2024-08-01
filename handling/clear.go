@@ -6,6 +6,11 @@ import (
 )
 
 func HandleClear() {
+	if len(os.Args) != 2 {
+		fmt.Println("Incorrect usage.")
+		fmt.Println("Correct usage: Sport-Companion clear")
+		return
+	}
 	err := Clear()
 	if err != nil {
 		fmt.Println(err)

@@ -16,6 +16,11 @@ import (
 )
 
 func HandleAdd() {
+	if len(os.Args) != 4 {
+		fmt.Println("Incorrect usage.")
+		fmt.Println("Hint: Sport-Companion add <league> <teamname>")
+		return
+	}
 	switch strings.ToLower(os.Args[2]) {
 	case "nhl":
 		addNHL()
@@ -36,7 +41,7 @@ func addNHL() {
 		fmt.Println(err)
 		return
 	}
-	err = writeToFile("NHL," + id)
+	err = writeToFile("NHL," + id + "," + os.Args[3])
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -54,7 +59,7 @@ func addNFL() {
 		fmt.Println(err)
 		return
 	}
-	err = writeToFile("NFL," + id)
+	err = writeToFile("NFL," + id + "," + os.Args[3])
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -72,7 +77,7 @@ func addMLB() {
 		fmt.Println(err)
 		return
 	}
-	err = writeToFile("MLB," + id)
+	err = writeToFile("MLB," + id + "," + os.Args[3])
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -90,7 +95,7 @@ func addNBA() {
 		fmt.Println(err)
 		return
 	}
-	err = writeToFile("NBA," + id)
+	err = writeToFile("NBA," + id + "," + os.Args[3])
 	if err != nil {
 		fmt.Println(err)
 		return

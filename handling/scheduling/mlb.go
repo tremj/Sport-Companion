@@ -10,7 +10,7 @@ import (
 	"github.com/tremerj/Sport-Companion/objects"
 )
 
-func NextFiveMLB(id string) (string, error) {
+func NextFiveMLB(id string, name string) (string, error) {
 	url := gameMLBURL(id, 0)
 	body, err := makeGenericGameRequest(url, "https://v1.baseball.api-sports.io")
 	if err != nil {
@@ -41,7 +41,8 @@ func NextFiveMLB(id string) (string, error) {
 	}
 
 	formattedOutput := formattedMLBGames(games.Games)
-	return formattedOutput, nil
+	finalResults := name + ":\n" + formattedOutput + "\n"
+	return finalResults, nil
 }
 
 func gameMLBURL(id string, back int) string {
